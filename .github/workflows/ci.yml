@@ -1,0 +1,15 @@
+name: BumpPump checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  mac:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: ./script/build.sh
+      - run: ./script/check_home.sh
+      - run: ./script/check_agent.sh
+      - run: ./script/check_assistant_keyboard.sh
+      - run: ./script/check_onboarding_connection.sh
+      - run: ./script/check_app_updates.sh

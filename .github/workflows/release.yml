@@ -1,0 +1,21 @@
+name: Draft BumpPump release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: ./script/build.sh
+      - run: python3 script/package.py
+      - name: Create release draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 -c 'import json,os; assert os.environ["RELEASE_TAG"] == "v"+json.load(open("outputs/release-manifest.json"))["version"]'
+          gh release create "$RELEASE_TAG" outputs/* --draft --generate-notes --title "BumpPump $RELEASE_TAG"
