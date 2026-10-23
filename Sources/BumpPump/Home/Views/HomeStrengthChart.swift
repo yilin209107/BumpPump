@@ -73,7 +73,7 @@ struct HomeStrengthChart: View {
               HStack {
                 Text(HomeFormat.date(record.date, pattern: "yyyy-MM-dd"))
                 Spacer()
-                Text((record.sets ?? []).enumerated().map { "\($0.element.group ?? $0.offset+1)组 " + ($0.element.side == "left" ? "左 " : $0.element.side == "right" ? "右 " : "") + ($0.element.reps.map { "\($0)次" } ?? $0.element.seconds.map { HomeFormat.number($0)+"秒" } ?? "—") }.joined(separator: " · ")).lineLimit(2)
+                Text(recordSummary(record)).lineLimit(2)
                 Image(systemName: "chevron.right").font(.system(size: 10))
               }.font(.system(size: 16)).padding(.vertical, 12).contentShape(Rectangle())
             }.modifier(AppGlassButton())
@@ -81,6 +81,19 @@ struct HomeStrengthChart: View {
         }
       }
     }
+  }
+  private func recordSummary(_ record: HomeAddedActivity) -> String {
+    var summaries: [String] = []
+    for (index, set) in (record.sets ?? []).enumerated() {
+      let group = "\(set.group ?? index + 1)组 "
+      let side = set.side == "left" ? "左 " : set.side == "right" ? "右 " : ""
+      let amount: String
+      if let reps = set.reps { amount = "\(reps)次" }
+      else if let seconds = set.seconds { amount = HomeFormat.number(seconds) + "秒" }
+      else { amount = "—" }
+      summaries.append(group + side + amount)
+    }
+    return summaries.joined(separator: " · ")
   }
   private func strengthBar(_ segment: StrengthSegment, timed: Bool) -> some ChartContent {
     let axisLabel = timed ? "秒数" : "次数"

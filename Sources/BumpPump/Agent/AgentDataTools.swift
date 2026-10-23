@@ -87,7 +87,11 @@ import CoreFoundation
     } else if section=="sourceArchive" {
       guard let table=args["table"] as? String else {return try JSONSerialization.agentString(["revision":entries.revision ?? 0,"tables":(entries.sourceArchive ?? [:]).mapValues(\.count)])}
       values=(entries.sourceArchive?[table] ?? []).map{$0 as [String:Any]}
-    } else if let list=encoded[section] as? [[String:Any]] {values=list}
+    } else if ["foods","activities","weights","foodLibrary","exerciseLibrary"].contains(section) {
+      // Optional libraries are omitted by Codable before their first item exists.
+      // They are valid empty collections, not unknown database partitions.
+      values=encoded[section] as? [[String:Any]] ?? []
+    }
     else if ["profile","goals","measurements","plans","reminders","energy_days"].contains(section) {
       values=(entries.documents?[section] ?? []).map{$0 as [String:Any]}
       if values.isEmpty {values=(entries.sourceArchive?[section=="measurements" ? "body_measurements":section] ?? []).map{$0 as [String:Any]}}

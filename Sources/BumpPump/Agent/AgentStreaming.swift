@@ -25,8 +25,8 @@ struct AgentSSEDecoder {
       for item in delta["tool_calls"] as? [[String:Any]] ?? [] {
         let index=item["index"] as? Int ?? 0, function=item["function"] as? [String:Any] ?? [:]
         var call=buffers[index] ?? .init(id:"",name:"",arguments:"")
-        if let id=item["id"] as? String {if call.id.isEmpty{call.id=id}else if call.id != id{throw AgentFailure("工具调用标识发生变化，未执行。")}}
-        if let name=function["name"] as? String,call.name != name {call.name += name}
+        if let id=item["id"] as? String,!id.isEmpty {if call.id.isEmpty{call.id=id}else if call.id != id{throw AgentFailure("工具调用标识发生变化，未执行。")}}
+        if let name=function["name"] as? String,!name.isEmpty,call.name != name {call.name += name}
         call.arguments += function["arguments"] as? String ?? "";buffers[index]=call
       }
       if let reason=choice["finish_reason"] as? String {
@@ -77,7 +77,10 @@ struct AgentSSEDecoder {
   mutating func finish() throws -> AgentTurn {
     guard completed else {throw AgentFailure("连接提前结束；未执行尚未完整接收的操作，可以重新发送。")}
     turn.calls=buffers.keys.sorted().compactMap{buffers[$0]}
-    guard turn.calls.count <= 12,Set(turn.calls.map(\.id)).count==turn.calls.count else {throw AgentFailure("工具调用标识异常，未执行。")}
+    // A library import commonly creates more than twelve foods in one turn.
+    // Keep a bounded batch while distinguishing capacity from invalid identities.
+    guard turn.calls.count <= 40 else {throw AgentFailure("单次最多处理40项操作，请拆分后继续；本轮尚未执行。")}
+    guard Set(turn.calls.map(\.id)).count==turn.calls.count else {throw AgentFailure("模型返回了重复的工具调用标识，本轮未执行。请重试。")}
     for call in turn.calls {
       guard !call.id.isEmpty,!call.name.isEmpty,let data=call.arguments.data(using:.utf8),(try? JSONSerialization.jsonObject(with:data)) is [String:Any] else {throw AgentFailure("模型给出的操作参数不完整，未执行。")}
     }

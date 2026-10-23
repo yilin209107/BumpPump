@@ -22,6 +22,14 @@ import CSQLite
     check(state.entries.foodLibrary==[label] && state.entries.sourceArchive==legacy.sourceArchive,"Migration must preserve labels and raw archive")
     check(try Data(contentsOf:directory.appendingPathComponent("entries.json"))==original,"Migration must not alter original JSON")
     let tools=AgentDataTools(state:state),day=HomeFormat.date(Date(),pattern:"yyyy-MM-dd")
+    let emptyState=HomeState(preload:true,entryStore:HomeDemoEntryStore(url:directory.appendingPathComponent("empty/fitness.sqlite")))
+    let emptyTools=AgentDataTools(state:emptyState)
+    for section in ["foods","activities","weights","foodLibrary","exerciseLibrary","profile","goals","measurements","plans","reminders","energy_days","trash","removedLibrary"] {
+      let result=try emptyTools.execute(.init(id:"empty-"+section,name:"read_app_data",arguments:try json(["section":section])),commandID:"empty-"+section)
+      let object=try JSONSerialization.jsonObject(with:Data(result.utf8)) as! [String:Any]
+      check((object["total"] as? Int)==0 && (object["rows"] as? [Any])?.isEmpty==true,"Every exposed collection must be readable before its first record: "+section)
+    }
+    do{_=try emptyTools.execute(.init(id:"unknown",name:"read_app_data",arguments:"{\"section\":\"external\"}"),commandID:"unknown");check(false,"Unknown partition accepted")}catch{check(true,"Unknown partitions remain rejected")}
     let call=AgentToolCall(id:"meal-1",name:"record_meal",arguments:try json(["date":day,"meal":"早餐","foods":[["food_id":"food-fixture","quantity":150,"unit":"g"]]]))
     let first=try tools.execute(call,commandID:"request-1")
     check(first.contains("\"committed\":true") && state.entries.foods.count==1 && state.entries.foods[0].nutrition.energy==165,"Tool must calculate from label and commit")
@@ -94,6 +102,31 @@ import CSQLite
     check((preservedBody["messages"] as? [[String:Any]])?.last?["reasoning_content"] as? String=="fixture reasoning","Provider-required reasoning context must round-trip without entering visible reply")
     var broken=AgentSSEDecoder(format:.chat);_=try broken.consume("{\"choices\":[{\"delta\":{\"content\":\"半句\"}}]}")
     do{_=try broken.finish();check(false,"Truncated stream accepted")}catch{check(true,"Truncated response must never execute")}
+    var batchDecoder=AgentSSEDecoder(format:.chat)
+    let batchCalls=(0..<18).map{i -> [String:Any] in ["index":i,"id":"batch-\(i)","function":["name":"change_app_data","arguments":"{\"collection\":\"foodLibrary\",\"operation\":\"create\",\"data\":{\"fields\":{\"name\":\"食物\(i)\",\"basis\":\"100g\",\"kcal\":\"100\"}}}"]]}
+    _=try batchDecoder.consume(try json(["choices":[["delta":["tool_calls":batchCalls],"finish_reason":"tool_calls"]]]))
+    let batchTurn=try batchDecoder.finish()
+    check(batchTurn.calls.count==18,"An eighteen-food import must not be mistaken for invalid tool IDs")
+    for call in batchTurn.calls{_=try emptyTools.execute(call,commandID:call.id)}
+    check(emptyState.entries.foodLibrary?.count==18,"A fresh library must accept and persist a batch of eighteen foods")
+    var repeatedID=AgentSSEDecoder(format:.chat)
+    _=try repeatedID.consume(try json(["choices":[["delta":["tool_calls":[["index":0,"id":"stable-id","function":["name":"read_app_data","arguments":"{\"section\":" ]]]]]]]))
+    _=try repeatedID.consume(try json(["choices":[["delta":["tool_calls":[["index":0,"id":"","function":["name":"","arguments":"\"foods\"}"]]]],"finish_reason":"tool_calls"]]]))
+    check(try repeatedID.finish().calls.first?.id=="stable-id","Blank continuation metadata must not replace a complete call ID")
+    var duplicateID=AgentSSEDecoder(format:.chat)
+    let duplicateCalls=(0..<2).map{i -> [String:Any] in ["index":i,"id":"duplicate","function":["name":"read_app_data","arguments":"{\"section\":\"foods\"}"]]}
+    _=try duplicateID.consume(try json(["choices":[["delta":["tool_calls":duplicateCalls],"finish_reason":"tool_calls"]]]))
+    do{_=try duplicateID.finish();check(false,"Duplicate tool identities accepted")}catch{check(error.localizedDescription.contains("重复"),"Duplicate IDs must remain rejected with a distinct error")}
+    let reusedCall=AgentToolCall(id:"provider-reused-id",name:"read_app_data",arguments:"{}")
+    let normalized=FitnessAgentState.completedContext([
+      .init(role:"assistant",text:"",calls:[reusedCall,.init(id:"pending",name:"read_app_data",arguments:"{}")],interrupted:true),
+      .init(role:"tool",text:"partial receipt",callID:reusedCall.id),
+      .init(role:"user",text:"继续"),
+      .init(role:"assistant",text:"",calls:[reusedCall]),
+      .init(role:"tool",text:"later receipt",callID:reusedCall.id)
+    ])
+    check(normalized.first?.text.contains("partial receipt")==true && normalized.first?.text.contains("later receipt")==false,"Interrupted receipts must stay scoped to their own tool turn")
+    check(normalized.last?.role=="tool" && normalized.last?.text=="later receipt","A reused ID in a later completed turn must retain its own receipt")
     for provider in APIProvider.all {
       let c=APIConnectionConfiguration(providerID:provider.id,key:"fixture-not-real",model:provider.models.first ?? "fixture-model",endpoint:provider.id=="custom" ? "https://fixture.invalid/v1":"")
       let (request,_)=try AgentHTTPTransport.request(configuration:c,system:"fixture",messages:[.init(role:"user",text:"你好")],tools:AgentDataTools.definitions)
@@ -128,6 +161,10 @@ import CSQLite
     writing.draft="记录测试标签100g";writing.send(home:state,setup:setup,transport:WritingAgentFixture(day:day),configuration:transportConfig)
     for _ in 0..<200 where writing.busy{try await Task.sleep(for:.milliseconds(10))}
     check(writing.error==nil && state.entries.foods.count==beforeAgentWrite+1 && writing.messages.last?.text=="已记录。","Full agent write loop must commit once and return the actual receipt")
+    let reused=FitnessAgentState(),beforeReused=state.entries.foods.count
+    reused.draft="分批记录两餐";reused.send(home:state,setup:setup,transport:ReusedIDAgentFixture(day:day),configuration:transportConfig)
+    for _ in 0..<200 where reused.busy{try await Task.sleep(for:.milliseconds(10))}
+    check(reused.error==nil && state.entries.foods.count==beforeReused+2 && reused.messages.last?.text=="两次记录完成。","Repeated provider call IDs across rounds must not collide with prior command receipts")
     let cancelled=FitnessAgentState(),beforeCancel=try store.read().foods.count
     cancelled.draft="隔离取消测试";cancelled.send(home:state,setup:setup,transport:CancelledAgentFixture(day:day),configuration:transportConfig)
     try await Task.sleep(for:.milliseconds(20));cancelled.cancel()
@@ -197,5 +234,15 @@ private struct CancelledAgentFixture:AgentTransport {
   let day:String
   func stream(configuration:APIConnectionConfiguration,system:String,messages:[AgentMessage],tools:[AgentToolDefinition],delta:@escaping @MainActor(String)->Void)async throws->AgentTurn {
     try await Task.sleep(for:.seconds(1));return .init(calls:[.init(id:"never-execute",name:"record_meal",arguments:"{}")])
+  }
+}
+private struct ReusedIDAgentFixture:AgentTransport {
+  let day:String
+  func stream(configuration:APIConnectionConfiguration,system:String,messages:[AgentMessage],tools:[AgentToolDefinition],delta:@escaping @MainActor(String)->Void)async throws->AgentTurn {
+    let receipts=messages.filter{$0.role=="tool"}
+    guard receipts.allSatisfy({$0.text.contains("\"committed\":true")}) else{throw AgentFailure("A repeated call ID collided with a previous turn")}
+    if receipts.count==2{return .init(text:"两次记录完成。")}
+    let amount=receipts.isEmpty ? 100:150
+    return .init(calls:[.init(id:"provider-reused-id",name:"record_meal",arguments:try JSONSerialization.agentString(["date":day,"meal":"早餐","foods":[["food_id":"food-fixture","quantity":amount,"unit":"g"]]]))])
   }
 }
