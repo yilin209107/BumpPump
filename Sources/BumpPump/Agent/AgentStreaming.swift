@@ -11,6 +11,7 @@ struct AgentSSEDecoder {
   private var blocks:[Int:[String:Any]]=[:]
   private var reasoning=""
   private var responseItems:[Int:[String:Any]]=[:]
+  init(format: Format) { self.format = format }
   mutating func consume(_ data:String) throws -> String {
     if data=="[DONE]" { return "" }
     guard let bytes=data.data(using:.utf8), let json=try JSONSerialization.jsonObject(with:bytes) as? [String:Any] else {throw AgentFailure("流式回复格式不完整，未执行未完成的操作。")}

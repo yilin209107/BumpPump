@@ -147,7 +147,10 @@ struct HomeEntryView: View {
         Text(food.basis + " · " + food.source).font(.system(size: 12)).foregroundStyle(palette.secondary)
         if let value = Double(draft.quantity), let nutrition = try? food.nutrition(quantity: value, unit: draft.quantityUnit) {
           Text("本次热量  " + nutrition.energyText + " kcal").font(.system(size: 24, weight: .medium, design: .rounded)).monospacedDigit().padding(.vertical, 7)
-          Text("蛋白质 " + nutrition.text("protein_g", value: nutrition.protein) + " g · 碳水 " + nutrition.text("carbs_g", value: nutrition.carbs) + " g · 脂肪 " + nutrition.text("fat_g", value: nutrition.fat) + " g").font(.system(size: 12)).foregroundStyle(palette.secondary)
+          let protein = nutrition.text("protein_g", value: nutrition.protein)
+          let carbs = nutrition.text("carbs_g", value: nutrition.carbs)
+          let fat = nutrition.text("fat_g", value: nutrition.fat)
+          Text("蛋白质 \(protein) g · 碳水 \(carbs) g · 脂肪 \(fat) g").font(.system(size: 12)).foregroundStyle(palette.secondary)
         }
       } else if draft.foodID == "other" {
         textField("食物名称", placeholder: "吃了什么？", value: $draft.name)

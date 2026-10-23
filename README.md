@@ -51,4 +51,10 @@ python3 script/package.py
 
 源码只依赖 Apple 系统框架及系统 SQLite；不需要 Python 运行环境或其他助理软件。Python 仅用于可选的发行 ZIP 打包。
 
-许可证：[MIT](LICENSE)。
+## 使用许可
+
+本项目源码可见，采用 [PolyForm Noncommercial License 1.0.0](LICENSE)。允许个人下载和非商业使用；商业用途需事先取得许可方 **yilin209107** 的另行书面授权，可通过[仓库 Issues](https://github.com/yilin209107/BumpPump/issues)联系。
+
+许可证也允许符合条款的非商业修改、再分发，以及条款列明的慈善、教育、公共研究、公共安全或卫生、环保和政府机构使用。再分发时须保留许可证或其链接，以及 `Required Notice:` 版权通知。具体范围以 [LICENSE](LICENSE) 英文原文为准。
+
+由于限制商业用途，本项目属于源码可见项目，不以标准开源许可证发布。首次公开时已经按 MIT 发布的初始提交 `6b60883` 仍保留其既有授权；本次许可调整不追溯取消那些副本的 MIT 权利。

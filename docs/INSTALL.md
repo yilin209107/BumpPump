@@ -11,3 +11,5 @@
 当前版本为 ad-hoc 签名，尚未完成 Apple 公证。其他 Mac 可能显示系统安全提示；不要禁用系统安全保护。发行者完成正式签名、公证后，应重新发布对应安装包。
 
 升级时替换 Applications 中的 BumpPump.app。本机记录和配置位于用户 Application Support，保留同一应用身份即可延续。可在设置中导出记录备份。
+
+许可为 PolyForm Noncommercial 1.0.0，允许个人非商业使用；商业使用需另行书面授权。完整条款见压缩包内许可协议及 App 的 LICENSE。

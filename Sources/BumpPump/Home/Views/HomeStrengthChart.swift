@@ -27,9 +27,7 @@ struct HomeStrengthChart: View {
             ScrollView(.horizontal) {
               Chart {
                 ForEach(chosen.segments) { segment in
-                  BarMark(x: .value("日期", segment.day), y: .value(chosen.timed ? "秒数" : "次数", segment.value), width: .ratio(0.52))
-                    .foregroundStyle(by: .value("组次", segment.group)).cornerRadius(3)
-                    .accessibilityLabel(segment.day + " · " + segment.group).accessibilityValue(HomeFormat.number(segment.value) + (chosen.timed ? " 秒" : " 次"))
+                  strengthBar(segment, timed: chosen.timed)
                 }
                 ForEach(chosen.totals.keys.sorted(), id: \.self) { day in
                   PointMark(x: .value("日期", day), y: .value("合计", chosen.totals[day]!)).symbolSize(0).foregroundStyle(.clear).accessibilityHidden(true)
@@ -83,5 +81,13 @@ struct HomeStrengthChart: View {
         }
       }
     }
+  }
+  private func strengthBar(_ segment: StrengthSegment, timed: Bool) -> some ChartContent {
+    let axisLabel = timed ? "秒数" : "次数"
+    let label = segment.day + " · " + segment.group
+    let value = HomeFormat.number(segment.value) + (timed ? " 秒" : " 次")
+    return BarMark(x: .value("日期", segment.day), y: .value(axisLabel, segment.value), width: .ratio(0.52))
+      .foregroundStyle(by: .value("组次", segment.group)).cornerRadius(3)
+      .accessibilityLabel(label).accessibilityValue(value)
   }
 }

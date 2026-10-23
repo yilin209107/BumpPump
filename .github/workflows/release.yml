@@ -18,4 +18,8 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           python3 -c 'import json,os; assert os.environ["RELEASE_TAG"] == "v"+json.load(open("outputs/release-manifest.json"))["version"]'
-          gh release create "$RELEASE_TAG" outputs/* --draft --generate-notes --title "BumpPump $RELEASE_TAG"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'Release already exists; retaining its assets and publication state.'
+          else
+            gh release create "$RELEASE_TAG" outputs/* --draft --generate-notes --title "BumpPump $RELEASE_TAG"
+          fi
