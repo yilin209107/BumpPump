@@ -9,13 +9,9 @@ struct HomeSidebar: View {
   @State private var cardioExpanded = false
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      // Keep the native window traffic lights clear; the sidebar action belongs
-      // to the brand row below them, rather than to the window-control row.
-      Color.clear.frame(height: 44)
-      HStack(alignment: .center, spacing: 12) {
-        Label("泵碰", systemImage: "dumbbell")
-          .font(.system(size: 20, weight: .medium))
-          .labelStyle(.titleAndIcon)
+      // The trailing action shares the top row with native window controls,
+      // while remaining to the right of their reserved leading area.
+      HStack {
         Spacer(minLength: 0)
         Button(action: toggleSidebar) {
           Image(systemName: "sidebar.leading")
@@ -28,8 +24,13 @@ struct HomeSidebar: View {
         .help("收起侧栏")
       }
       .padding(.horizontal, 20)
-      .padding(.top, 4)
-      .padding(.bottom, 12)
+      .frame(height: 52)
+      Label("泵碰", systemImage: "dumbbell")
+        .font(.system(size: 20, weight: .medium))
+        .labelStyle(.titleAndIcon)
+        .padding(.horizontal, 20)
+        .padding(.top, 4)
+        .padding(.bottom, 16)
       List(selection: Binding<HomeDestination?>(get: { state.destination }, set: { if let value = $0 { state.select(value) } })) {
         Label("主页 · 概览", systemImage: "house").tag(HomeDestination.overview).padding(.vertical, 5)
         DisclosureGroup(isExpanded: $foodExpanded) {

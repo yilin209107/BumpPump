@@ -2,7 +2,7 @@
 
 适用 Apple Silicon Mac，macOS 14 或更新。macOS 26 或更新使用系统 Liquid Glass。
 
-1. 下载并解压 `BumpPump-macOS-arm64-v1.0.0.zip`。
+1. 下载并解压 `BumpPump-macOS-arm64-v1.0.1.zip`。
 2. 把 `BumpPump.app` 拖入 Applications，打开后完成首次设置。
 3. 选择手动记录，或自行在 App 内配置 AI 服务商和 API Key。
 

@@ -143,7 +143,11 @@ struct HomeWorkspace: View {
             .accessibilityLabel(assistant ? "收起助理":"打开助理")
             .help(assistant ? "收起助理":"打开AI助理")
         }}.environment(\.usesGlassControls,true)
-        }.padding(.horizontal,20)
+        }
+        // This column reaches the window's left edge once the sidebar closes.
+        // Reserve the traffic-light region before placing the reopen control.
+        .padding(.leading, columns == .detailOnly ? 112 : 20)
+        .padding(.trailing,20)
       }.frame(maxWidth:.infinity,maxHeight:.infinity)
     }.frame(height:52)
   }
