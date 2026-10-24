@@ -81,7 +81,7 @@ struct HomeMacroChart: View {
                 }.frame(minHeight: 36).contentShape(Rectangle())
               }.modifier(AppGlassButton()).help(entry.name + "的克数与热量占比")
             }
-          }.frame(maxWidth: 370)
+          }.frame(maxWidth:370).modifier(HomeGlowShield(soft:true,strength:0.3))
           if !compact { Spacer(minLength: 0) }
         }.frame(maxWidth: .infinity, alignment: .leading)
       }

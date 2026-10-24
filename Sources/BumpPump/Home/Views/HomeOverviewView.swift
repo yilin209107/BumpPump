@@ -45,7 +45,7 @@ struct HomeOverviewView: View {
         Text(HomeFormat.date(state.selectedDate, pattern: "yyyy年M月d日"))
           .font(.system(size: 30, weight: .medium)).tracking(-0.7)
         Image(systemName: "chevron.down").font(.system(size: 12)).foregroundStyle(palette.secondary)
-      }.contentShape(Rectangle())
+      }.contentShape(Rectangle()).modifier(HomeGlowShield(soft:true,strength:0.3))
     }.modifier(AppGlassButton()).accessibilityLabel("选择日期，当前为" + HomeFormat.date(state.selectedDate, pattern: "yyyy年M月d日"))
       .popover(isPresented: $showingDate, arrowEdge: .bottom) {
         VStack(alignment: .leading, spacing: 16) {
@@ -112,7 +112,7 @@ struct HomeOverviewView: View {
         HStack(spacing: 13) {
           Image(systemName: "figure.cooldown").font(.system(size: 23, weight: .light))
           Text("这一天没有运动记录，休息也是节奏的一部分。").font(.system(size: 13))
-        }.foregroundStyle(palette.secondary).padding(.vertical, 20)
+        }.foregroundStyle(palette.secondary).padding(.vertical,20).modifier(HomeGlowShield(soft:true,strength:0.3))
       } else {
         ScrollView(.horizontal) {
           HStack(spacing: 12) {
@@ -143,7 +143,7 @@ struct HomeMealCard: View {
           Image(systemName: "chevron.down").font(.system(size: 11, weight: .medium)).rotationEffect(.degrees(expanded ? 180 : 0))
         }
       }.padding(18).frame(width: 164, alignment: .leading)
-    }.modifier(AppGlassButton()).background(palette.surface.opacity(0.58), in: RoundedRectangle(cornerRadius: 15))
+    }.modifier(AppGlassButton()).background(palette.surface.opacity(0.58), in: RoundedRectangle(cornerRadius: 15)).modifier(HomeGlowShield(radius:15))
       .overlay(RoundedRectangle(cornerRadius: 15).strokeBorder(palette.line.opacity(0.2), lineWidth: 1))
       .accessibilityLabel("\(meal.title)，\(meal.foods.isEmpty ? "未记录" : meal.nutrition.energyText + " 千卡")，\(expanded ? "收起" : "展开")明细")
       .help("点击展开" + meal.title + "明细")
@@ -186,7 +186,7 @@ struct HomeMealExpansion: View {
         }
       }
       Button("查看营养明细", action: details).font(.system(size: 12)).modifier(AppGlassButton()).frame(minHeight: 32)
-    }.padding(18).background(palette.surface.opacity(0.5), in: RoundedRectangle(cornerRadius: 13))
+    }.padding(18).background(palette.surface.opacity(0.5), in: RoundedRectangle(cornerRadius: 13)).modifier(HomeGlowShield(radius:13))
   }
 }
 struct HomeActivityCard: View {
@@ -208,7 +208,7 @@ struct HomeActivityCard: View {
       }.padding(18).frame(width: 258, alignment: .leading)
 
         .contentShape(RoundedRectangle(cornerRadius: 15))
-    }.modifier(AppGlassButton()).background(palette.surface.opacity(0.56), in: RoundedRectangle(cornerRadius: 15))
+    }.modifier(AppGlassButton()).background(palette.surface.opacity(0.56), in: RoundedRectangle(cornerRadius: 15)).modifier(HomeGlowShield(radius:15))
       .overlay(RoundedRectangle(cornerRadius: 15).strokeBorder(palette.line.opacity(0.2), lineWidth: 1)).help("查看" + activity.title + "记录")
   }
 }

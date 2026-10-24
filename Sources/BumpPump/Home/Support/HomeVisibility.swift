@@ -6,6 +6,7 @@ final class HomePageAnimationLedger: ObservableObject {
   private var started = Set<String>()
   func contains(_ token: String) -> Bool { started.contains(token) }
   func insert(_ token: String) { started.insert(token) }
+  func remove(_ token: String) { started.remove(token) }
 }
 private struct HomePageAnimationLedgerKey: EnvironmentKey { static let defaultValue: HomePageAnimationLedger? = nil }
 private struct HomeViewportKey: EnvironmentKey { static let defaultValue: CGRect? = nil }
@@ -101,13 +102,19 @@ struct HomeRevealWhenVisible: ViewModifier {
   let token: String
   let animation: Animation
   var delay: Duration = .milliseconds(25)
+  var replayOnTokenChange = false
   @Environment(\.appAnimationsVisible) private var windowVisible
   @Environment(\.homePageAnimationLedger) private var ledger
   @State private var visible = false
   @State private var localStarted = Set<String>()
+  @State private var previousToken: String?
   func body(content: Content) -> some View {
     content.modifier(HomeVisibleInScroll { visible = $0 })
       .task(id: HomeRevealRequest(key: token, visible: visible, windowVisible: windowVisible)) {
+        if replayOnTokenChange, let previousToken, previousToken != token {
+          localStarted.remove(token); ledger?.remove(token)
+        }
+        previousToken = token
         if hasStarted { setImmediately(1); return }
         setImmediately(0)
         guard visible, windowVisible else { return }

@@ -58,7 +58,7 @@ struct HomeSectionHeading<Accessory: View>: View {
         if !help.isEmpty { HomeHelpButton(title: title, message: help) }
       }
       if !subtitle.isEmpty { Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary) }
-    }
+    }.modifier(HomeGlowShield(soft:true,strength:0.3))
   }
 }
 struct HomeRecordSheet: View {
@@ -97,5 +97,22 @@ struct HomeAddButton: View {
   var body: some View {
     Button(action: action) { Image(systemName: "plus").font(.system(size: 14, weight: .medium)).frame(width: 36, height: 36) }
       .modifier(AppGlassButton(prominent: true, tint: .blue, circle: true)).accessibilityLabel(label).help(label)
+  }
+}
+
+/// Attenuates only the glow directly behind content; the surrounding glow keeps
+/// its original brightness and physics. Soft edges avoid a new visible panel.
+struct HomeGlowShield:ViewModifier {
+  var radius:CGFloat=12
+  var soft=false
+  var strength=0.38
+  @Environment(\.colorScheme) private var scheme
+  func body(content:Content)->some View {
+    content.background {
+      RoundedRectangle(cornerRadius:radius)
+        .fill(SetupPalette(dark:scheme == .dark).background.opacity(scheme == .dark ? strength:strength*0.45))
+        .padding(soft ? -5:0).blur(radius:soft ? 8:0)
+        .allowsHitTesting(false)
+    }
   }
 }

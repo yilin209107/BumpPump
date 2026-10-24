@@ -25,19 +25,24 @@ struct HomeStrengthChart: View {
         if let chosen {
           if !table {
             ScrollView(.horizontal) {
+              HomeAnimatedChart(token:"strength|"+chosen.id+"|"+chosen.segments.map{$0.id+":"+String($0.value.bitPattern)}.joined(separator:";"),reduced:reduced,layers:chosen.groups.count) { phase in
               Chart {
                 ForEach(chosen.segments) { segment in
-                  strengthBar(segment, timed: chosen.timed)
+                  strengthBar(segment, series:chosen, phase:phase)
                 }
                 ForEach(chosen.totals.keys.sorted(), id: \.self) { day in
                   PointMark(x: .value("日期", day), y: .value("合计", chosen.totals[day]!)).symbolSize(0).foregroundStyle(.clear).accessibilityHidden(true)
-                    .annotation(position: .top) { Text(HomeFormat.number(chosen.totals[day]!)).font(.system(size: 11, design: .rounded)).foregroundStyle(palette.secondary) }
+                    .annotation(position: .top) { Text(HomeFormat.number(chosen.totals[day]!)).font(.system(size: 11, design: .rounded)).foregroundStyle(palette.secondary).opacity(phase.totals) }
                 }
                 if let hovered { RuleMark(x: .value("日期", hovered)).foregroundStyle(palette.secondary.opacity(0.3)) }
               }.chartForegroundStyleScale(domain: chosen.groups, range: chosen.groups.enumerated().map { $0.element == "未分组总次数" ? Color.gray : colors[$0.offset % colors.count] })
                 .chartYScale(domain: 0...max(1, (chosen.totals.values.max() ?? 1)*1.15))
-                .chartXAxis { AxisMarks { _ in AxisTick(); AxisValueLabel() } }
-                .chartYAxisLabel(chosen.timed ? "秒" : "次")
+                .chartXAxis { AxisMarks { _ in AxisTick().foregroundStyle(palette.line.opacity(phase.axes)); AxisValueLabel().foregroundStyle(palette.secondary.opacity(phase.axes)) } }
+                .chartYAxis {AxisMarks { _ in AxisGridLine().foregroundStyle(palette.line.opacity(0.35*phase.axes));AxisValueLabel().foregroundStyle(palette.secondary.opacity(phase.axes))}}
+                .chartYAxisLabel {Text(chosen.timed ? "秒":"次").opacity(phase.axes)}
+                .chartLegend {
+                  HStack(spacing:9){ForEach(Array(chosen.groups.enumerated()),id:\.element){index,group in HStack(spacing:5){Circle().fill(group=="未分组总次数" ? Color.gray:colors[index%colors.count]).frame(width:7,height:7);Text(group).font(.system(size:10)).foregroundStyle(palette.secondary)}}}.opacity(phase.axes)
+                }
                 .chartOverlay { proxy in
                   GeometryReader { geometry in
                     Rectangle().fill(.clear).contentShape(Rectangle())
@@ -62,8 +67,7 @@ struct HomeStrengthChart: View {
                     }
                   }
                 }
-                .frame(width: max(520, CGFloat(chosen.totals.count)*78), height: 250)
-                .modifier(HomeChartReveal(token: "strength|" + chosen.id + "|" + chosen.segments.map { $0.id + ":" + $0.day + ":" + $0.group + ":" + String($0.value.bitPattern) }.joined(separator: ";"), reduced: reduced))
+              }.frame(width:max(520,CGFloat(chosen.totals.count)*78),height:250)
             }.modifier(HomeScrollViewport())
           }
           ForEach(chosen.records.sorted { $0.date > $1.date }) { record in
@@ -95,12 +99,15 @@ struct HomeStrengthChart: View {
     }
     return summaries.joined(separator: " · ")
   }
-  private func strengthBar(_ segment: StrengthSegment, timed: Bool) -> some ChartContent {
-    let axisLabel = timed ? "秒数" : "次数"
-    let label = segment.day + " · " + segment.group
-    let value = HomeFormat.number(segment.value) + (timed ? " 秒" : " 次")
-    return BarMark(x: .value("日期", segment.day), y: .value(axisLabel, segment.value), width: .ratio(0.52))
-      .foregroundStyle(by: .value("组次", segment.group)).cornerRadius(3)
-      .accessibilityLabel(label).accessibilityValue(value)
+  private func strengthBar(_ segment:StrengthSegment,series:StrengthSeries,phase:HomeChartPhase)->some ChartContent {
+    let axisLabel=series.timed ? "秒数":"次数"
+    let index=series.groups.firstIndex(of:segment.group) ?? 0
+    let preceding=series.segments.prefix(while:{$0.id != segment.id}).filter{$0.day==segment.day}
+    let lower=preceding.reduce(0){$0+$1.value*phase.layer(series.groups.firstIndex(of:$1.group) ?? 0)}
+    let upper=lower+segment.value*phase.layer(index)
+    return BarMark(x:.value("日期",segment.day),yStart:.value("下界",lower),yEnd:.value(axisLabel,upper),width:.ratio(0.52))
+      .foregroundStyle(by:.value("组次",segment.group)).cornerRadius(3)
+      .accessibilityLabel(segment.day+" · "+segment.group)
+      .accessibilityValue(HomeFormat.number(segment.value)+(series.timed ? " 秒":" 次"))
   }
 }

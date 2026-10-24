@@ -1,15 +1,49 @@
 import SwiftUI
 import Charts
 
-struct HomeChartReveal: ViewModifier {
-  let token: String
-  let reduced: Bool
-  @State private var progress = 0.0
-  func body(content: Content) -> some View {
-    content.mask(alignment: .leading) { Rectangle().scaleEffect(x: reduced ? 1 : progress, y: 1, anchor: .leading) }
-      .opacity(reduced ? progress : 1)
-      .modifier(HomeRevealWhenVisible(progress: $progress, token: "chart|" + token,
-        animation: .easeOut(duration: reduced ? 0.15 : 0.75)))
+/// Axes/points appear first. Marks then grow one stack layer at a time, or
+/// a line connects the already-visible points from left to right.
+struct HomeChartPhase {
+  let progress:Double
+  let layers:Int
+  let reduced:Bool
+  var axes:Double { reduced ? 1:clamp(progress/0.16) }
+  var line:Double { reduced ? 1:clamp((progress-0.18)/0.78) }
+  var totals:Double { reduced ? 1:clamp((progress-0.94)/0.06) }
+  func layer(_ index:Int)->Double {
+    if reduced{return 1}
+    let fraction=clamp((progress-0.18)/0.74*Double(max(1,layers))-Double(index))
+    return fraction*fraction*(3-2*fraction)
+  }
+  private func clamp(_ value:Double)->Double {min(1,max(0,value))}
+}
+private struct HomeChartFrame<Plot:View>:View,Animatable {
+  var progress:Double
+  let layers:Int
+  let reduced:Bool
+  let plot:(HomeChartPhase)->Plot
+  var animatableData:Double {get{progress}set{progress=newValue}}
+  var body:some View {plot(.init(progress:progress,layers:layers,reduced:reduced)).opacity(reduced ? progress:1).modifier(HomeGlowShield(soft:true,strength:0.22))}
+}
+struct HomeAnimatedChart<Plot:View>:View {
+  let token:String
+  let reduced:Bool
+  var layers=1
+  @ViewBuilder var plot:(HomeChartPhase)->Plot
+  @State private var visible=0.0
+  @State private var progress=0.0
+  var body:some View {
+    HomeChartFrame(progress:progress,layers:layers,reduced:reduced,plot:plot)
+      .modifier(HomeRevealWhenVisible(progress:$visible,token:"chart|"+token,animation:.linear(duration:0),replayOnTokenChange:true))
+      .task(id:token+"|"+String(visible)) {
+        var transaction=Transaction();transaction.disablesAnimations=true
+        withTransaction(transaction){progress=0}
+        guard visible>=1 else{return}
+        // Give the empty foundation a frame before starting the staged reveal.
+        do{try await Task.sleep(for:.milliseconds(25))}catch{return}
+        guard !Task.isCancelled else{return}
+        withAnimation(.linear(duration:reduced ? 0.15:min(3.6,0.65+Double(max(1,layers))*0.28))){progress=1}
+      }
   }
 }
 struct HomeChartTableSwitch: View {
@@ -54,8 +88,9 @@ struct HomeWeightChart: View {
           }
         }.frame(height: 220)
       } else {
-        chart.frame(height: compact ? 205 : 230)
-          .modifier(HomeChartReveal(token: "weight|\(state.range)|\(state.selectedDate)|" + values.map { "\($0.date.timeIntervalSinceReferenceDate):\($0.jin.bitPattern)" }.joined(separator: ";"), reduced: reduced))
+        HomeAnimatedChart(token:"weight|\(state.range)|\(state.selectedDate)|"+values.map{"\($0.date.timeIntervalSinceReferenceDate):\($0.jin.bitPattern)"}.joined(separator:";"),reduced:reduced) { phase in
+          chart(phase)
+        }.frame(height:compact ? 205:230)
           .overlay(alignment: .topLeading) {
             if let point = hovered { tooltip(HomeFormat.date(point.date) + " · " + HomeFormat.number(point.jin, digits: 1) + " 斤") }
           }
@@ -85,24 +120,33 @@ struct HomeWeightChart: View {
       HomeChartTableSwitch(table: $table)
     }
   }
-  private var chart: some View {
+  private func chart(_ phase:HomeChartPhase)->some View {
     Chart {
       ForEach(values) { point in
-        LineMark(x: .value("日期", point.date), y: .value("体重（斤）", point.jin))
-          .foregroundStyle(palette.accent).lineStyle(StrokeStyle(lineWidth: 2.2, lineCap: .round)).interpolationMethod(.linear)
         PointMark(x: .value("日期", point.date), y: .value("体重（斤）", point.jin))
-          .foregroundStyle(palette.accent).symbolSize(hovered?.date == point.date ? 48 : 16)
+          .foregroundStyle(palette.accent.opacity(phase.axes)).symbolSize(hovered?.date == point.date ? 48 : 16)
           .accessibilityLabel(HomeFormat.date(point.date)).accessibilityValue(HomeFormat.number(point.jin, digits: 1) + " 斤")
       }
       if let point = hovered {
-        RuleMark(x: .value("所选日期", point.date)).foregroundStyle(palette.secondary.opacity(0.35)).lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+        RuleMark(x: .value("所选日期", point.date)).foregroundStyle(palette.secondary.opacity(0.35*phase.axes)).lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
       }
     }.chartYScale(domain: domain)
       .chartXScale(domain: dateDomain(state.history.map(\.date), fallback: state.selectedDate))
-      .chartXAxis { AxisMarks(values: .automatic(desiredCount: compact ? 3 : 5)) { _ in AxisValueLabel(format: .dateTime.month(.twoDigits).day(.twoDigits)).font(.system(size: 10)).foregroundStyle(palette.secondary) } }
-      .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { _ in AxisGridLine().foregroundStyle(palette.line.opacity(0.16)); AxisValueLabel().font(.system(size: 10)).foregroundStyle(palette.secondary) } }
+      .chartXAxis { AxisMarks(values: .automatic(desiredCount: compact ? 3 : 5)) { _ in AxisValueLabel(format: .dateTime.month(.twoDigits).day(.twoDigits)).font(.system(size: 10)).foregroundStyle(palette.secondary.opacity(phase.axes)) } }
+      .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { _ in AxisGridLine().foregroundStyle(palette.line.opacity(0.16*phase.axes)); AxisValueLabel().font(.system(size: 10)).foregroundStyle(palette.secondary.opacity(phase.axes)) } }
       .chartOverlay { proxy in
         GeometryReader { geometry in
+          if let anchor=proxy.plotFrame {
+            let frame=geometry[anchor]
+            Path { path in
+              for (index,point) in values.enumerated() {
+                if let x=proxy.position(forX:point.date),let y=proxy.position(forY:point.jin) {
+                  let location=CGPoint(x:frame.minX+x,y:frame.minY+y)
+                  if index==0{path.move(to:location)}else{path.addLine(to:location)}
+                }
+              }
+            }.trim(from:0,to:phase.line).stroke(palette.accent,style:StrokeStyle(lineWidth:2.2,lineCap:.round,lineJoin:.round)).allowsHitTesting(false)
+          }
           Rectangle().fill(.clear).contentShape(Rectangle())
             .onContinuousHover { phase in
               switch phase { case .active(let position): hovered = point(at: position, proxy: proxy, geometry: geometry); case .ended: hovered = nil }
@@ -154,8 +198,9 @@ struct HomeEnergyChart: View {
           }
         }.frame(height: 230)
       } else {
-        chart.frame(height: 230)
-          .modifier(HomeChartReveal(token: "energy|\(state.range)|\(state.selectedDate)|\(state.energyGoal ?? 0)|" + state.energy.map { "\($0.date.timeIntervalSinceReferenceDate):\($0.kind.rawValue):\($0.kcal.bitPattern)" }.joined(separator: ";"), reduced: reduced))
+        HomeAnimatedChart(token:"energy|\(state.range)|\(state.selectedDate)|\(state.energyGoal ?? 0)|"+state.energy.map{"\($0.date.timeIntervalSinceReferenceDate):\($0.kind.rawValue):\($0.kcal.bitPattern)"}.joined(separator:";"),reduced:reduced,layers:DemoMealKind.allCases.count) { phase in
+          chart(phase)
+        }.frame(height:230)
           .overlay(alignment: .topLeading) {
             if let point = hovered {
               Text(HomeFormat.date(point.date) + " · " + point.kind.rawValue + " " + HomeFormat.number(point.kcal) + " kcal · 点击查看当天")
@@ -165,22 +210,30 @@ struct HomeEnergyChart: View {
       }
     }.onChange(of: state.range) { _, _ in hovered = nil }.onChange(of: state.selectedDate) { _, _ in hovered = nil }
   }
-  private var chart: some View {
+  private func chart(_ phase:HomeChartPhase)->some View {
     Chart {
       ForEach(state.energy) { point in
-      BarMark(x: .value("日期", point.date, unit: .day), y: .value("热量", point.kcal), stacking: .standard)
+      let index=DemoMealKind.allCases.firstIndex(of:point.kind) ?? 0
+      let lower=state.energy.filter{$0.date==point.date && (DemoMealKind.allCases.firstIndex(of:$0.kind) ?? 0)<index}.reduce(0){$0+$1.kcal*phase.layer(DemoMealKind.allCases.firstIndex(of:$1.kind) ?? 0)}
+      BarMark(x:.value("日期",point.date,unit:.day),yStart:.value("下界",lower),yEnd:.value("热量",lower+point.kcal*phase.layer(index)))
         .foregroundStyle(by: .value("餐次", point.kind.rawValue))
         .opacity(hovered == nil || hovered?.date == point.date ? 1 : 0.55)
         .accessibilityLabel(HomeFormat.date(point.date) + point.kind.rawValue).accessibilityValue(HomeFormat.number(point.kcal) + " 千卡")
       }
+      if !compact {
+        ForEach(state.history.filter{!$0.meals.isEmpty && $0.nutrition.energy>0}) { day in
+          PointMark(x:.value("日期",day.date,unit:.day),y:.value("合计",day.nutrition.energy)).symbolSize(0).foregroundStyle(.clear).accessibilityHidden(true)
+            .annotation(position:.top){Text(HomeFormat.number(day.nutrition.energy)).font(.system(size:10,design:.rounded)).foregroundStyle(palette.secondary).opacity(phase.totals)}
+        }
+      }
       if let goal = state.energyGoal {
-        RuleMark(y: .value("当前目标参考", goal)).foregroundStyle(palette.dark ? Color(hex: 0xF2CF63) : Color(hex: 0x9B7210)).lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 4]))
+        RuleMark(y: .value("当前目标参考", goal)).foregroundStyle(palette.dark ? Color(hex: 0xF2CF63) : Color(hex: 0x9B7210)).opacity(phase.axes).lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 4]))
           .accessibilityLabel("当前热量目标参考").accessibilityValue(HomeFormat.number(goal) + " 千卡")
       }
     }.chartForegroundStyleScale(domain: DemoMealKind.allCases.map(\.rawValue), range: DemoMealKind.allCases.map { $0.color(dark: palette.dark) })
       .chartLegend(.hidden).chartXScale(domain: dateDomain(state.history.map(\.date), fallback: state.selectedDate)).chartYScale(domain: 0...max(2500, max(state.energyGoal ?? 0, state.history.map { $0.nutrition.energy }.max() ?? 0) * 1.15))
-      .chartXAxis { AxisMarks(values: .automatic(desiredCount: compact ? 3 : 6)) { _ in AxisValueLabel(format: .dateTime.month(.twoDigits).day(.twoDigits)).font(.system(size: 10)).foregroundStyle(palette.secondary) } }
-      .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { _ in AxisGridLine().foregroundStyle(palette.line.opacity(0.16)); AxisValueLabel().font(.system(size: 10)).foregroundStyle(palette.secondary) } }
+      .chartXAxis { AxisMarks(values: .automatic(desiredCount: compact ? 3 : 6)) { _ in AxisValueLabel(format: .dateTime.month(.twoDigits).day(.twoDigits)).font(.system(size: 10)).foregroundStyle(palette.secondary.opacity(phase.axes)) } }
+      .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { _ in AxisGridLine().foregroundStyle(palette.line.opacity(0.16*phase.axes)); AxisValueLabel().font(.system(size: 10)).foregroundStyle(palette.secondary.opacity(phase.axes)) } }
       .chartOverlay { proxy in
         GeometryReader { geometry in
           Rectangle().fill(.clear).contentShape(Rectangle())
