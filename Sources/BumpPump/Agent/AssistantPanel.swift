@@ -12,8 +12,6 @@ struct AssistantPanel:View {
   @Environment(\.scenePhase) private var phase
   @Environment(\.appAnimationsVisible) private var animationsVisible
   @State private var composerHeight:CGFloat=20
-  @State private var undoHovered=false
-  @State private var undoHelp=false
   @State private var options=false
   @State private var attachmentOptions=false
   @AppStorage("assistant.shortcutsHintShown") private var shortcutsHintShown=false
@@ -30,16 +28,6 @@ struct AssistantPanel:View {
             Text(setup.recordingMode == .ai ? setup.provider.name+" · "+setup.model : "配置AI后开始对话").font(.system(size:10)).foregroundStyle(palette.secondary).lineLimit(1).truncationMode(.middle)
           }
           Spacer(minLength:4)
-          Button{undoHelp=false;agent.undo(home:home)}label:{Image(systemName:"arrow.uturn.backward").frame(width:26,height:26)}
-            .modifier(AppGlassButton(circle:true)).disabled(agent.busy || home.entryStore?.isDatabase != true)
-            .accessibilityLabel("撤销最近修改")
-            .onHover{undoHovered=$0;if !$0{undoHelp=false}}
-            .task(id:undoHovered){
-              guard undoHovered else{return}
-              do{try await Task.sleep(for:.seconds(2))}catch{return}
-              if !Task.isCancelled,undoHovered{undoHelp=true}
-            }
-            .popover(isPresented:$undoHelp,arrowEdge:.bottom){Text("撤销最近修改").font(.system(size:12)).padding(10).allowsHitTesting(false)}
           Button{options.toggle()}label:{Image(systemName:"ellipsis").frame(width:26,height:26)}
             .modifier(AppGlassButton(circle:true)).disabled(agent.busy).accessibilityLabel("助理选项")
             .popover(isPresented:$options,arrowEdge:.bottom) {

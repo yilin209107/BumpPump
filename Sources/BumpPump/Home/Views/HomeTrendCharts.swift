@@ -53,8 +53,8 @@ struct HomeChartHorizontalViewport<Plot:View>:View {
   var body:some View {
     GeometryReader { geometry in
       ScrollView(.horizontal) {
-        plot.frame(width:max(minWidth,geometry.size.width),height:height)
-      }.modifier(HomeScrollViewport()).scrollIndicators(.automatic)
+        plot.frame(width:max(minWidth,geometry.size.width-16),height:height).padding(.horizontal,8)
+      }.frame(width:geometry.size.width,height:height).modifier(HomeScrollViewport()).scrollIndicators(.automatic)
     }.frame(height:height)
   }
 }
@@ -245,7 +245,7 @@ struct HomeEnergyChart: View {
           .accessibilityLabel("当前热量目标参考").accessibilityValue(HomeFormat.number(goal) + " 千卡")
       }
     }.chartForegroundStyleScale(domain: DemoMealKind.allCases.map(\.rawValue), range: DemoMealKind.allCases.map { $0.color(dark: palette.dark) })
-      .chartLegend(.hidden).chartXScale(domain: dateDomain(state.history.map(\.date), fallback: state.selectedDate)).chartYScale(domain: 0...max(2500, max(state.energyGoal ?? 0, state.history.map { $0.nutrition.energy }.max() ?? 0) * 1.15))
+      .chartLegend(.hidden).chartXScale(domain: energyDateDomain(state.history.map(\.date), fallback: state.selectedDate)).chartYScale(domain: 0...max(2500, max(state.energyGoal ?? 0, state.history.map { $0.nutrition.energy }.max() ?? 0) * 1.15))
       .chartXAxis { AxisMarks(values: .automatic(desiredCount: compact ? 3 : 6)) { _ in AxisValueLabel(format: .dateTime.month(.twoDigits).day(.twoDigits)).font(.system(size: 10)).foregroundStyle(palette.secondary.opacity(phase.axes)) } }
       .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { _ in AxisGridLine().foregroundStyle(palette.line.opacity(0.16*phase.axes)); AxisValueLabel().font(.system(size: 10)).foregroundStyle(palette.secondary.opacity(phase.axes)) } }
       .chartOverlay { proxy in
@@ -274,4 +274,13 @@ struct HomeEnergyChart: View {
 private func dateDomain(_ dates: [Date], fallback: Date) -> ClosedRange<Date> {
   guard let first = dates.min(), let last = dates.max(), first < last else { let centre = dates.first ?? fallback; return centre.addingTimeInterval(-43200)...centre.addingTimeInterval(43200) }
   return first...last
+}
+
+/// BarMark's day bins include the entire last day, rather than ending at its
+/// midnight. A larger scroll range cannot reveal a bar outside the chart domain.
+private func energyDateDomain(_ dates:[Date],fallback:Date)->ClosedRange<Date> {
+  let calendar=Calendar.current
+  let first=calendar.startOfDay(for:dates.min() ?? fallback)
+  let last=calendar.startOfDay(for:dates.max() ?? fallback)
+  return first...calendar.date(byAdding:.day,value:1,to:last)!
 }

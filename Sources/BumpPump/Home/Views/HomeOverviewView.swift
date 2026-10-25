@@ -28,8 +28,9 @@ struct HomeOverviewView: View {
           Divider().opacity(0.35)
           HomeMacroChart(state: state, palette: palette, reduced: reduced, compact: geo.size.width < 650)
             .modifier(HomeEntrance(index: 5, reduced: reduced, token: "overview:macro:\(state.selectedDate):" + (state.day?.nutrition.animationKey ?? "empty")))
-        }.padding(.horizontal, geo.size.width < 600 ? 24 : 36).padding(.top, 26).padding(.bottom, 40)
-          .frame(maxWidth: 1120, alignment: .leading).frame(maxWidth: .infinity)
+        }.frame(width:max(1,min(1120,geo.size.width)-2*(geo.size.width < 600 ? 24:36)),alignment:.leading)
+          .padding(.horizontal,geo.size.width < 600 ? 24:36).padding(.top,26).padding(.bottom,40)
+          .frame(maxWidth:.infinity)
       }.modifier(HomeScrollViewport())
         .onChange(of: state.selectedDate) { _, _ in state.expandedMealID = nil; mealPage = 0 }
     }.environment(\.homePageAnimationLedger, animationLedger)
