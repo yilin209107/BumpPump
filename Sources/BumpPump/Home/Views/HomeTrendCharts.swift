@@ -46,6 +46,18 @@ struct HomeAnimatedChart<Plot:View>:View {
       }
   }
 }
+struct HomeChartHorizontalViewport<Plot:View>:View {
+  let height:CGFloat
+  var minWidth:CGFloat=520
+  @ViewBuilder var plot:Plot
+  var body:some View {
+    GeometryReader { geometry in
+      ScrollView(.horizontal) {
+        plot.frame(width:max(minWidth,geometry.size.width),height:height)
+      }.modifier(HomeScrollViewport()).scrollIndicators(.automatic)
+    }.frame(height:height)
+  }
+}
 struct HomeChartTableSwitch: View {
   @Binding var table: Bool
   var body: some View {
@@ -88,10 +100,11 @@ struct HomeWeightChart: View {
           }
         }.frame(height: 220)
       } else {
+        HomeChartHorizontalViewport(height:compact ? 205:230) {
         HomeAnimatedChart(token:"weight|\(state.range)|\(state.selectedDate)|"+values.map{"\($0.date.timeIntervalSinceReferenceDate):\($0.jin.bitPattern)"}.joined(separator:";"),reduced:reduced) { phase in
           chart(phase)
-        }.frame(height:compact ? 205:230)
-          .overlay(alignment: .topLeading) {
+        }
+        }.overlay(alignment: .topLeading) {
             if let point = hovered { tooltip(HomeFormat.date(point.date) + " · " + HomeFormat.number(point.jin, digits: 1) + " 斤") }
           }
       }
@@ -198,10 +211,11 @@ struct HomeEnergyChart: View {
           }
         }.frame(height: 230)
       } else {
+        HomeChartHorizontalViewport(height:230,minWidth:max(520,CGFloat(Set(state.energy.map(\.date)).count)*34)) {
         HomeAnimatedChart(token:"energy|\(state.range)|\(state.selectedDate)|\(state.energyGoal ?? 0)|"+state.energy.map{"\($0.date.timeIntervalSinceReferenceDate):\($0.kind.rawValue):\($0.kcal.bitPattern)"}.joined(separator:";"),reduced:reduced,layers:DemoMealKind.allCases.count) { phase in
           chart(phase)
-        }.frame(height:230)
-          .overlay(alignment: .topLeading) {
+        }
+        }.overlay(alignment: .topLeading) {
             if let point = hovered {
               Text(HomeFormat.date(point.date) + " · " + point.kind.rawValue + " " + HomeFormat.number(point.kcal) + " kcal · 点击查看当天")
                 .font(.system(size: 11)).padding(.horizontal, 12).padding(.vertical, 8).background(palette.surface, in: RoundedRectangle(cornerRadius: 8)).padding(.leading, 42).allowsHitTesting(false)

@@ -157,6 +157,8 @@ import CSQLite
     agent.draft="测试查询";agent.send(home:state,setup:setup,transport:FixtureAgentTransport(),configuration:.init(providerID:"deepseek",key:"fixture-not-real",model:"fixture"))
     for _ in 0..<200 where agent.busy{try await Task.sleep(for:.milliseconds(10))}
     check(!agent.busy && agent.error==nil && agent.messages.contains{$0.role=="tool"} && agent.messages.last?.text=="查询完成。","Agent loop must stream, execute local tool, feed result and finish")
+    check(agent.messages.contains{$0.role=="clock" && abs($0.date.timeIntervalSinceNow)<60},"Execution must visibly record a fresh local clock check")
+    check(!FitnessAgentState.completedContext(agent.messages).contains{$0.role=="clock"},"Clock UI receipts must not create unsupported provider roles or break tool context")
     let writing=FitnessAgentState(),beforeAgentWrite=state.entries.foods.count
     writing.draft="记录测试标签100g";writing.send(home:state,setup:setup,transport:WritingAgentFixture(day:day),configuration:transportConfig)
     for _ in 0..<200 where writing.busy{try await Task.sleep(for:.milliseconds(10))}

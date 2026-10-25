@@ -18,6 +18,7 @@ import SwiftUI
 
     let editor=AssistantInputTextView(frame:NSRect(x:0,y:0,width:240,height:100))
     editor.isRichText=false;editor.isEditable=true
+    check(editor.showsPlaceholder,"An empty native editor should show its placeholder")
     var sends=0
     editor.submit={sends += 1}
     editor.string="第一行";editor.setSelectedRange(NSRange(location:(editor.string as NSString).length,length:0))
@@ -36,6 +37,7 @@ import SwiftUI
     editor.isEditable=true
     editor.setMarkedText("ni",selectedRange:NSRange(location:2,length:0),replacementRange:NSRange(location:NSNotFound,length:0))
     check(editor.hasMarkedText(),"Native composition fixture must contain marked text")
+    check(!editor.showsPlaceholder,"An IME composition must hide the placeholder before committing text")
     check(!AssistantInputTextView.sendsMessage(key(.shift),hasMarkedText:editor.hasMarkedText()),"An active native composition must preserve its confirmation key")
     print("Assistant keyboard checks: \(count) assertions passed")
   }

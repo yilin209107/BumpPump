@@ -89,7 +89,10 @@ struct AssistantPanel:View {
       }message:{Text("shift+enter发消息，enter为换行")}
   }
   @ViewBuilder private func messageView(_ message:AgentMessage)->some View {
-    if message.role=="tool" {
+    if message.role=="clock" {
+      Label("已核对当前时间 · "+HomeFormat.date(message.date,pattern:"M月d日 HH:mm:ss"),systemImage:"clock")
+        .font(.system(size:11)).foregroundStyle(palette.secondary)
+    } else if message.role=="tool" {
       let json=(try? JSONSerialization.jsonObject(with:Data(message.text.utf8))) as? [String:Any]
       let ok=json?["ok"] as? Bool != false
       HStack(alignment:.top,spacing:7){Image(systemName:ok ? (message.toolName=="read_app_data" ? "magnifyingglass":"checkmark.circle") : "exclamationmark.circle");Text(ok ? (message.toolName=="read_app_data" ? "已查看本机记录":"已保存到本机") : (json?["error"] as? String ?? "操作未保存"))}.font(.system(size:11)).foregroundStyle(ok ? palette.secondary:palette.error).textSelection(.enabled)
@@ -135,9 +138,6 @@ struct AssistantPanel:View {
             }
           AssistantMessageEditor(text:$agent.draft,measuredHeight:$composerHeight,editable:!agent.busy,submit:send)
             .frame(height:composerHeight)
-            .overlay(alignment:.topLeading) {
-              if agent.draft.isEmpty {Text("问问助理，或记下一餐…").font(.system(size:14)).foregroundStyle(palette.secondary).allowsHitTesting(false).accessibilityHidden(true)}
-            }
             .padding(.horizontal,16).padding(.vertical,14).frame(minHeight:48)
             .modifier(AppGlassSurface(radius:24))
           if agent.busy {

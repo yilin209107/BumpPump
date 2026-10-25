@@ -3,6 +3,8 @@ import SwiftUI
 struct HomeRecordsView: View {
   @ObservedObject var state: HomeState
   let palette: SetupPalette
+  var recordIDs:Set<String>?=nil
+  var scopeTitle:String?=nil
   @Environment(\.dismiss) private var dismiss
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.accessibilityReduceMotion) private var reduced
@@ -15,7 +17,7 @@ struct HomeRecordsView: View {
   @State private var lastRemoved: HomeLocalRecord?
   private var records: [HomeLocalRecord] {
     (removed ? Array(state.removedRecords.reversed()) : state.localRecords).filter {
-      (filter == "全部" || $0.kind.rawValue == filter) && (query.isEmpty || ($0.title + $0.category + HomeFormat.date($0.date, pattern: "yyyy-MM-dd")).localizedCaseInsensitiveContains(query))
+      (recordIDs == nil || recordIDs!.contains($0.storageID)) && (filter == "全部" || $0.kind.rawValue == filter) && (query.isEmpty || ($0.title + $0.category + HomeFormat.date($0.date, pattern: "yyyy-MM-dd")).localizedCaseInsensitiveContains(query))
     }
   }
   var body: some View {
@@ -25,8 +27,8 @@ struct HomeRecordsView: View {
       VStack(alignment: .leading, spacing: 20) {
         header
         Picker("记录状态", selection: $removed) {
-          Text("本机记录 · \(state.localRecords.count)").tag(false)
-          Text("最近移除 · \(state.removedRecords.count)").tag(true)
+          Text("本机记录 · \(state.localRecords.filter{recordIDs == nil || recordIDs!.contains($0.storageID)}.count)").tag(false)
+          Text("最近移除 · \(state.removedRecords.filter{recordIDs == nil || recordIDs!.contains($0.storageID)}.count)").tag(true)
         }.pickerStyle(.segmented)
         HStack(spacing: 14) {
           TextField("搜索名称、分类或日期", text: $query).textFieldStyle(.plain).modifier(FieldSurface(palette: palette)).accessibilityLabel("搜索本机记录")
@@ -74,12 +76,12 @@ struct HomeRecordsView: View {
   private var header: some View {
     HStack(spacing: 18) {
       HStack(spacing: 7) {
-        Text("我的本机记录").font(.system(size: 27, weight: .medium))
+        Text(scopeTitle.map{$0+"记录"} ?? "我的本机记录").font(.system(size: 27, weight: .medium))
         HomeHelpButton(title: "我的本机记录", message: "记录保存在本机，导入来源随记录保留。可按类型、名称或日期查找，修改后会同步更新图表。移除后记录会留在“最近移除”中，可以恢复；刚移除时也可点击撤销。")
       }
       Spacer()
-      Menu { Button("饮食") { newKind = .food }; Button("运动") { newKind = .activity }; Button("体重") { newKind = .weight } } label: { Label("新增", systemImage: "plus") }
-        .menuStyle(.borderlessButton).modifier(AppGlassButton(tint: .blue)).fixedSize()
+      if recordIDs == nil { Menu { Button("饮食") { newKind = .food }; Button("运动") { newKind = .activity }; Button("体重") { newKind = .weight } } label: { Label("新增", systemImage: "plus") }
+        .menuStyle(.borderlessButton).modifier(AppGlassButton(tint: .blue)).fixedSize() }
       HomeIconButton(symbol: "xmark", label: "关闭本机记录") { dismiss() }.keyboardShortcut(.cancelAction)
     }
   }

@@ -8,6 +8,7 @@ struct HomeOverviewView: View {
   @StateObject private var animationLedger = HomePageAnimationLedger()
   @State private var showingDate = false
   @State private var mealPage = 0
+  @State private var editingMeal:DemoMeal?
   var body: some View {
     GeometryReader { geo in
       ScrollView {
@@ -32,6 +33,7 @@ struct HomeOverviewView: View {
       }.modifier(HomeScrollViewport())
         .onChange(of: state.selectedDate) { _, _ in state.expandedMealID = nil; mealPage = 0 }
     }.environment(\.homePageAnimationLedger, animationLedger)
+      .sheet(item:$editingMeal){meal in HomeRecordsView(state:state,palette:palette,recordIDs:Set(meal.foods.map(\.id)),scopeTitle:meal.title)}
   }
   private var dateHeader: some View {
       ViewThatFits(in: .horizontal) {
@@ -75,7 +77,7 @@ struct HomeOverviewView: View {
           ScrollView(.horizontal) {
             HStack(spacing: 12) {
               ForEach(Array(displayedMeals.enumerated()), id: \.element.id) { index, meal in
-                HomeMealCard(meal: meal, palette: palette, expanded: state.expandedMealID == meal.id, add: { state.recordMeal(meal.kind) }) {
+                HomeMealCard(meal: meal, palette: palette, expanded: state.expandedMealID == meal.id, edit:{editingMeal=meal}, add: { state.recordMeal(meal.kind) }) {
                   withAnimation(.easeInOut(duration: reduced ? 0.12 : 0.28)) { state.expandedMealID = state.expandedMealID == meal.id ? nil : meal.id }
                 }.id(index).modifier(HomeEntrance(index: index, reduced: reduced, token: "meal-card:" + meal.id + ":" + meal.nutrition.animationKey))
               }
@@ -130,12 +132,13 @@ struct HomeMealCard: View {
   let meal: DemoMeal
   let palette: SetupPalette
   let expanded: Bool
+  let edit:()->Void
   let add: () -> Void
   let action: () -> Void
   var body: some View {
     Button(action: action) {
       VStack(alignment: .leading, spacing: 15) {
-        Text(meal.title).font(.system(size: 15, weight: .medium)).padding(.trailing, 35).frame(maxWidth: .infinity, alignment: .leading).frame(height: 32)
+        Text(meal.title).font(.system(size: 15, weight: .medium)).padding(.horizontal,28).frame(maxWidth:.infinity,alignment:.center).frame(height:32)
         HomeMealRing(nutrition: meal.nutrition, palette: palette, recorded: !meal.foods.isEmpty, identity: meal.id).frame(width: 118, height: 118).frame(maxWidth: .infinity)
         HStack {
           Text(meal.time).font(.system(size: 10, design: .monospaced)).foregroundStyle(palette.secondary)
@@ -147,6 +150,11 @@ struct HomeMealCard: View {
       .overlay(RoundedRectangle(cornerRadius: 15).strokeBorder(palette.line.opacity(0.2), lineWidth: 1))
       .accessibilityLabel("\(meal.title)，\(meal.foods.isEmpty ? "未记录" : meal.nutrition.energyText + " 千卡")，\(expanded ? "收起" : "展开")明细")
       .help("点击展开" + meal.title + "明细")
+      .overlay(alignment:.topLeading) {
+        Button(action:edit){Image(systemName:"pencil").font(.system(size:14,weight:.medium)).frame(width:36,height:36)}
+          .modifier(AppGlassButton(prominent:true,tint:.blue,circle:true)).foregroundStyle(.blue)
+          .disabled(meal.foods.isEmpty).accessibilityLabel("编辑"+meal.title).help("编辑这餐的食物记录").padding(8)
+      }
       .overlay(alignment: .topTrailing) { HomeAddButton(label: "记录" + meal.kind.rawValue, palette: palette, action: add).padding(8) }
   }
 }

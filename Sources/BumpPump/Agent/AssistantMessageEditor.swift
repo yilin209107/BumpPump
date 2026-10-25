@@ -58,6 +58,7 @@ struct AssistantMessageEditor:NSViewRepresentable {
       let location=min(selection.location,(text as NSString).length)
       editor.setSelectedRange(NSRange(location:location,length:0))
     }
+    editor.needsDisplay=true
     context.coordinator.measure(scroll)
   }
 
@@ -105,11 +106,28 @@ final class AssistantEditorScrollView:NSScrollView {
 
 final class AssistantInputTextView:NSTextView {
   var submit:(()->Void)?
+  var showsPlaceholder:Bool {string.isEmpty && !hasMarkedText()}
+  override func draw(_ dirtyRect:NSRect) {
+    super.draw(dirtyRect)
+    if showsPlaceholder {
+      NSAttributedString(string:"问问助理，或记下一餐…",attributes:[.font:font ?? NSFont.systemFont(ofSize:14),.foregroundColor:NSColor.secondaryLabelColor]).draw(at:textContainerOrigin)
+    }
+  }
+  override func didChangeText(){super.didChangeText();needsDisplay=true}
+  override func setMarkedText(_ value:Any,selectedRange:NSRange,replacementRange:NSRange){
+    super.setMarkedText(value,selectedRange:selectedRange,replacementRange:replacementRange);needsDisplay=true
+  }
+  override func unmarkText(){super.unmarkText();needsDisplay=true}
   override func keyDown(with event:NSEvent) {
     // Do not intercept candidate confirmation for Chinese, Japanese, or other IMEs.
     if Self.sendsMessage(event,hasMarkedText:hasMarkedText()) {
       guard isEditable,!event.isARepeat else{return}
       submit?()
+      return
+    }
+    let modifiers=event.modifierFlags.intersection([.shift,.command,.control,.option])
+    if !hasMarkedText(),(event.keyCode==36 || event.keyCode==76),modifiers.isEmpty,isEditable {
+      insertNewline(nil)
       return
     }
     super.keyDown(with:event)

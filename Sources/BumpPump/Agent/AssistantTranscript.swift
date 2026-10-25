@@ -8,9 +8,14 @@ enum AssistantTranscript {
     var readCount:Int?
   }
   static func rows(_ messages:[AgentMessage])->[Row] {
-    var result:[Row]=[],summaryIndex:Int?,seen=Set<String>()
+    var result:[Row]=[],summaryIndex:Int?,clockIndex:Int?,seen=Set<String>()
     for message in messages {
-      if message.role=="user" {summaryIndex=nil;seen=[]}
+      if message.role=="user" {summaryIndex=nil;clockIndex=nil;seen=[]}
+      if message.role=="clock" {
+        if let clockIndex {result[clockIndex].message=message}
+        else {clockIndex=result.count;result.append(.init(id:"clock-"+message.id,message:message))}
+        continue
+      }
       if message.role=="tool",message.toolName=="read_app_data",
          let json=(try? JSONSerialization.jsonObject(with:Data(message.text.utf8))) as? [String:Any],
          json["ok"] as? Bool != false {
@@ -50,5 +55,5 @@ struct AssistantReadReceipt:View {
       .accessibilityElement(children:.ignore).accessibilityLabel("已查看本机\(count)条记录")
       .onAppear{update()}.onChange(of:count){_,_ in update()}
   }
-  private func update(){withAnimation(reduced ? nil:.smooth(duration:0.65)){shown=count}}
+  private func update(){withAnimation(reduced ? nil:.smooth(duration:1.4)){shown=count}}
 }
