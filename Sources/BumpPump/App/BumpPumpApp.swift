@@ -50,12 +50,13 @@ private struct WindowChrome: NSViewRepresentable {
   func updateNSView(_ nsView: NSView, context: Context) {
     DispatchQueue.main.async {
       guard let window = nsView.window else { return }
-      window.titlebarAppearsTransparent = true
-      window.titleVisibility = .hidden
-      window.titlebarSeparatorStyle = .none
-      window.isMovableByWindowBackground = false
-      window.backgroundColor = NSColor(SetupPalette(dark: dark).background)
-      window.appearance = nil
+      if !window.titlebarAppearsTransparent { window.titlebarAppearsTransparent = true }
+      if window.titleVisibility != .hidden { window.titleVisibility = .hidden }
+      if window.titlebarSeparatorStyle != .none { window.titlebarSeparatorStyle = .none }
+      if window.isMovableByWindowBackground { window.isMovableByWindowBackground = false }
+      let background = NSColor(SetupPalette(dark: dark).background)
+      if window.backgroundColor != background { window.backgroundColor = background }
+      if window.appearance != nil { window.appearance = nil }
     }
   }
 }
@@ -67,6 +68,6 @@ extension Notification.Name {
 
 private struct AppCheckForUpdatesButton:View {
   @Environment(\.appOpenSettings) private var openSettings
-  @AppStorage("BumpPump.settingsTab") private var settingsTab="ai"
+  @AppPreference("BumpPump.settingsTab") private var settingsTab="ai"
   var body:some View {Button("检查新版本…"){settingsTab="about";openSettings()}}
 }

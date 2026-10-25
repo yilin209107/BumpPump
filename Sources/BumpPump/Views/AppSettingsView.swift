@@ -6,7 +6,7 @@ struct AppSettingsView: View {
   @ObservedObject var setup: SetupState
   var apiPreview = false
   var dataStore = HomeDemoEntryStore.local
-  @AppStorage("BumpPump.settingsTab") private var tab = "ai"
+  @AppPreference("BumpPump.settingsTab") private var tab = "ai"
   var body: some View {
     TabView(selection: $tab) {
       APISettingsView(configurationChanged: { setup.restoreSelection() }, preview: apiPreview).tabItem { Label("AI 配置", systemImage: "key.horizontal") }.tag("ai")
@@ -92,8 +92,8 @@ struct LocalDataSettingsView: View {
 }
 struct AppAboutView: View {
   @Environment(\.colorScheme) private var scheme
-  @AppStorage private var repository: String
-  init(defaults: UserDefaults = .standard) { _repository = AppStorage(wrappedValue: "yilin209107/BumpPump", "BumpPump.updateRepository", store: defaults) }
+  @AppPreference private var repository: String
+  init(defaults: UserDefaults = .standard) { _repository = AppPreference(wrappedValue: "yilin209107/BumpPump", "BumpPump.updateRepository", store: defaults) }
   @State private var result: AppReleaseInfo?
   @State private var message = ""
   @State private var checking = false

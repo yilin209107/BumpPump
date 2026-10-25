@@ -4,7 +4,7 @@
 
 ## 源码
 
-上传本项目根目录的 Package.swift、Sources、Resources、Tests、script、docs、README、LICENSE、.gitignore 和 .github。不要上传 .build、dist、outputs、work、数据库、聊天、API Key 或证书。也可以解压 BumpPump-Source-v1.0.3.zip，将其 BumpPump 文件夹作为 GitHub Desktop 的本地仓库。
+上传本项目根目录的 Package.swift、Sources、Resources、Tests、script、docs、README、LICENSE、.gitignore 和 .github。不要上传 .build、dist、outputs、work、数据库、聊天、API Key 或证书。也可以解压 BumpPump-Source-v1.0.4.zip，将其 BumpPump 文件夹作为 GitHub Desktop 的本地仓库。
 
 仓库首页使用 Resources/Cover.png。应用名称为 BumpPump，中文名为泵碰，Bundle ID 为 app.bumppump.mac，初始版本为 1.0.0。
 
@@ -12,7 +12,7 @@
 
 运行 `./script/build.sh` 和 `python3 script/package.py`。outputs 中包含 Mac 安装 ZIP、源码 ZIP、SHA256SUMS 和 release-manifest.json。
 
-在 GitHub Releases → Draft a new release，标签为 v1.0.3，目标 main。上传 Mac ZIP、SHA256SUMS 和 manifest；源码 ZIP 可选。先保存草稿，核对后发布。初期试用可标为 pre-release；App 内版本检查只查询正式 Release。
+在 GitHub Releases → Draft a new release，标签为 v1.0.4，目标 main。上传 Mac ZIP、SHA256SUMS 和 manifest；源码 ZIP 可选。先保存草稿，核对后发布。初期试用可标为 pre-release；App 内版本检查只查询正式 Release。
 
 ## 签名
 

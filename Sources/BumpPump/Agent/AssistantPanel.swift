@@ -14,7 +14,7 @@ struct AssistantPanel:View {
   @State private var composerHeight:CGFloat=20
   @State private var options=false
   @State private var attachmentOptions=false
-  @AppStorage("assistant.shortcutsHintShown") private var shortcutsHintShown=false
+  @AppPreference("assistant.shortcutsHintShown") private var shortcutsHintShown=false
   @State private var showingShortcutsHint=false
   private var palette:SetupPalette{setup.palette}
   var body:some View {

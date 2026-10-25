@@ -19,7 +19,7 @@
 
 ## 第一次使用
 
-下载最新 Release 中的 `BumpPump-macOS-arm64-v1.0.3.zip`，解压后把 BumpPump.app 拖入 Applications。
+下载最新 Release 中的 `BumpPump-macOS-arm64-v1.0.4.zip`，解压后把 BumpPump.app 拖入 Applications。
 
 首次打开进入设置，可以先选手动模式。App 不附带个人记录、聊天、食品标签或 API Key；填写自己的数据即可使用。再次启动直接进入主页。
 
