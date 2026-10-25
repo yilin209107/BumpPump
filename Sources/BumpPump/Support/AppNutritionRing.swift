@@ -32,7 +32,7 @@ struct AppNutritionRing:View {
             let start=segments.prefix(index).reduce(0){$0+max(0,$1.value)}/max(total,1)
             let end=start+max(0,segment.value)/max(total,1)
             AppRingArc(start:start,end:end,innerRatio:innerRatio/outerRatio,gap:gap)
-              .fill(segment.color).frame(width:radius*2,height:radius*2)
+              .fill(segment.color,style:FillStyle(eoFill:true)).frame(width:radius*2,height:radius*2)
               .accessibilityLabel(segment.name).accessibilityValue(segment.accessibilityValue)
           }
         }.frame(width:geometry.size.width,height:geometry.size.height)
@@ -49,7 +49,16 @@ struct AppRingArc:Shape {
     let radius=min(rect.width,rect.height)/2
     guard radius>0,end>start else{return Path()}
     let fullCircle=end-start>=0.999999
-    let inset=fullCircle ? 0:min((end-start)*Double.pi*0.42,gap/max(1,radius)*0.5)
+    if fullCircle {
+      // Explicit even-odd ellipses avoid older Path arc normalization treating
+      // a full reverse inner arc as another filled disc.
+      var ring=Path()
+      let outer=CGRect(x:rect.midX-radius,y:rect.midY-radius,width:radius*2,height:radius*2)
+      ring.addEllipse(in:outer)
+      ring.addEllipse(in:outer.insetBy(dx:radius*(1-innerRatio),dy:radius*(1-innerRatio)))
+      return ring
+    }
+    let inset=min((end-start)*Double.pi*0.42,gap/max(1,radius)*0.5)
     let from=start*Double.pi*2-Double.pi/2+inset
     let to=end*Double.pi*2-Double.pi/2-inset
     let centre=CGPoint(x:rect.midX,y:rect.midY)

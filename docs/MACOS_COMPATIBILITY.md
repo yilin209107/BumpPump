@@ -1,6 +1,6 @@
 # macOS 兼容性
 
-BumpPump 1.0.2 的最低系统版本为 macOS 13.0，安装包适用于 Apple Silicon（arm64）。Intel Mac 不在当前安装包支持范围内。
+BumpPump 1.0.3 的最低系统版本为 macOS 13.0，安装包适用于 Apple Silicon（arm64）。Intel Mac 不在当前安装包支持范围内。
 
 | 系统 | 界面实现 |
 |---|---|
