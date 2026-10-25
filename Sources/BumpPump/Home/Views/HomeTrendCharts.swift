@@ -85,7 +85,7 @@ struct HomeWeightChart: View {
         VStack(alignment: .leading, spacing: 12) { heading; controls }
       }
       if values.isEmpty {
-        ContentUnavailableView("这段时间没有体重测量", systemImage: "scalemass", description: Text("缺少的测量不会补零，也不会生成趋势。"))
+        AppEmptyState("这段时间没有体重测量", systemImage: "scalemass", description: Text("缺少的测量不会补零，也不会生成趋势。"))
           .frame(height: 200)
       } else if table {
         ScrollView {
@@ -108,7 +108,7 @@ struct HomeWeightChart: View {
             if let point = hovered { tooltip(HomeFormat.date(point.date) + " · " + HomeFormat.number(point.jin, digits: 1) + " 斤") }
           }
       }
-    }.onChange(of: state.range) { _, _ in hovered = nil }.onChange(of: state.selectedDate) { _, _ in hovered = nil }
+    }.appOnChange(of: state.range) { _, _ in hovered = nil }.appOnChange(of: state.selectedDate) { _, _ in hovered = nil }
   }
   private var heading: some View {
     VStack(alignment: .leading, spacing: 7) {
@@ -149,7 +149,7 @@ struct HomeWeightChart: View {
       .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { _ in AxisGridLine().foregroundStyle(palette.line.opacity(0.16*phase.axes)); AxisValueLabel().font(.system(size: 10)).foregroundStyle(palette.secondary.opacity(phase.axes)) } }
       .chartOverlay { proxy in
         GeometryReader { geometry in
-          if let anchor=proxy.plotFrame {
+          if let anchor=proxy.appPlotFrame {
             let frame=geometry[anchor]
             Path { path in
               for (index,point) in values.enumerated() {
@@ -170,7 +170,7 @@ struct HomeWeightChart: View {
       .accessibilityLabel("过去\(state.range)天的体重测量折线图，单位斤，可切换数据表查看")
   }
   private func point(at position: CGPoint, proxy: ChartProxy, geometry: GeometryProxy) -> DemoWeight? {
-    guard let anchor = proxy.plotFrame else { return nil }
+    guard let anchor = proxy.appPlotFrame else { return nil }
     let plot = geometry[anchor]
     guard plot.contains(position), let date = proxy.value(atX: position.x-plot.minX, as: Date.self) else { return nil }
     return values.min { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) }
@@ -197,7 +197,7 @@ struct HomeEnergyChart: View {
         }
       }
       if !table && state.energy.isEmpty && state.energyGoal == nil {
-        ContentUnavailableView(state.history.contains { !$0.meals.isEmpty } ? "饮食已记录，热量待补充" : "这段时间没有饮食记录", systemImage: "fork.knife", description: Text("缺少热量的食物保留在餐次明细中，可以稍后补充。" )).frame(height: 230)
+        AppEmptyState(state.history.contains { !$0.meals.isEmpty } ? "饮食已记录，热量待补充" : "这段时间没有饮食记录", systemImage: "fork.knife", description: Text("缺少热量的食物保留在餐次明细中，可以稍后补充。" )).frame(height: 230)
       } else if table {
         ScrollView {
           VStack(spacing: 0) {
@@ -222,7 +222,7 @@ struct HomeEnergyChart: View {
             }
           }
       }
-    }.onChange(of: state.range) { _, _ in hovered = nil }.onChange(of: state.selectedDate) { _, _ in hovered = nil }
+    }.appOnChange(of: state.range) { _, _ in hovered = nil }.appOnChange(of: state.selectedDate) { _, _ in hovered = nil }
   }
   private func chart(_ phase:HomeChartPhase)->some View {
     Chart {
@@ -259,7 +259,7 @@ struct HomeEnergyChart: View {
       }.accessibilityLabel("按餐次堆叠的每日摄入热量，近\(state.range)天，可切换数据表查看")
   }
   private func point(at position: CGPoint, proxy: ChartProxy, geometry: GeometryProxy) -> DemoEnergy? {
-    guard let anchor = proxy.plotFrame else { return nil }
+    guard let anchor = proxy.appPlotFrame else { return nil }
     let plot = geometry[anchor]
     guard plot.contains(position), let date = proxy.value(atX: position.x-plot.minX, as: Date.self), let energy = proxy.value(atY: position.y-plot.minY, as: Double.self) else { return nil }
     guard let day = state.history.first(where: { Calendar.current.isDate($0.date, inSameDayAs: date) }) else { return nil }

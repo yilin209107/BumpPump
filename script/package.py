@@ -40,7 +40,7 @@ def main():
     entries.append((ROOT/'docs/INSTALL.md',Path('安装说明.md')))
     entries.append((ROOT/'LICENSE',Path('许可协议.txt')))
     write_zip(app_zip,entries)
-    manifest={'name':'BumpPump','chineseName':'泵碰','version':version,'bundleIdentifier':'app.bumppump.mac','platform':'Apple Silicon, macOS 14+; Liquid Glass on macOS 26+','signing':'ad-hoc; not notarized','license':'PolyForm-Noncommercial-1.0.0','personalDataIncluded':False,'apiKeysIncluded':False,'startsWithFirstRunSetup':True,'artifacts':[]}
+    manifest={'name':'BumpPump','chineseName':'泵碰','version':version,'bundleIdentifier':'app.bumppump.mac','platform':'Apple Silicon, macOS 13+; Liquid Glass on macOS 26+','signing':'ad-hoc; not notarized','license':'PolyForm-Noncommercial-1.0.0','personalDataIncluded':False,'apiKeysIncluded':False,'startsWithFirstRunSetup':True,'artifacts':[]}
     for f in [app_zip,source_zip]:manifest['artifacts'].append({'filename':f.name,'bytes':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()})
     (OUT/'release-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
     (OUT/'SHA256SUMS').write_text(''.join(f['sha256']+'  '+f['filename']+'\n' for f in manifest['artifacts']))

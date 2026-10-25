@@ -7,7 +7,7 @@ struct AssistantPanel:View {
   @ObservedObject var home:HomeState
   @ObservedObject var setup:SetupState
   var close:()->Void
-  @Environment(\.openSettings) private var openSettings
+  @Environment(\.appOpenSettings) private var openSettings
   @Environment(\.accessibilityReduceMotion) private var reduced
   @Environment(\.scenePhase) private var phase
   @Environment(\.appAnimationsVisible) private var animationsVisible
@@ -56,13 +56,13 @@ struct AssistantPanel:View {
                 if agent.busy {HStack(spacing:8){ProgressView().controlSize(.mini);Text(agent.status).font(.system(size:11)).foregroundStyle(palette.secondary)}.padding(.vertical,8)}
                 Color.clear.frame(height:1).id("assistant-bottom")
               }.padding(.horizontal,24)
-            }.defaultScrollAnchor(.top)
+            }.appDefaultScrollAnchor(.top)
               // The system reserves the composer's complete height for the final
               // scroll position. Unclipped content can still pass behind its glass.
-              .scrollClipDisabled()
+              .appScrollClipDisabled()
               .safeAreaInset(edge:.bottom,spacing:0){bottomControls}
-              .onChange(of:agent.messages.last?.text){_,text in if text != nil {proxy.scrollTo("assistant-bottom",anchor:.bottom)}}
-              .onChange(of:agent.messages.count){_,count in if count > 0 {withAnimation(.easeOut(duration:reduced ? 0.05:0.18)){proxy.scrollTo("assistant-bottom",anchor:.bottom)}}}
+              .appOnChange(of:agent.messages.last?.text){_,text in if text != nil {proxy.scrollTo("assistant-bottom",anchor:.bottom)}}
+              .appOnChange(of:agent.messages.count){_,count in if count > 0 {withAnimation(.easeOut(duration:reduced ? 0.05:0.18)){proxy.scrollTo("assistant-bottom",anchor:.bottom)}}}
           }
         .clipped()
       }

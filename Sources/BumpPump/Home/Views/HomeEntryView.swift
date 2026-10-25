@@ -66,7 +66,7 @@ struct HomeEntryView: View {
               }
             }.frame(maxWidth: 600).padding(.horizontal, 5).padding(.bottom, 14).frame(maxWidth: .infinity)
           }.scrollIndicators(.visible)
-            .onChange(of: draft.error) { _, error in
+            .appOnChange(of: draft.error) { _, error in
               if error != nil { withAnimation(.easeOut(duration: 0.2)) { scroll.scrollTo("entry-error", anchor: .bottom) } }
             }
           }
@@ -133,7 +133,7 @@ struct HomeEntryView: View {
           if let saved = draft.originalFood?.labelSnapshot, !state.packagedFoods.contains(where: { $0.id == saved.id }) { Text(saved.name + "（历史标签）").tag(saved.id) }
           Divider(); Text("其他 · 手动填写").tag("other")
         }.labelsHidden().modifier(FieldSurface(palette: palette))
-          .onChange(of: draft.foodID) { _, id in draft.selectFood(state.packagedFoods.first { $0.id == id }) }
+          .appOnChange(of: draft.foodID) { _, id in draft.selectFood(state.packagedFoods.first { $0.id == id }) }
       }
       if let food = state.packagedFoods.first(where: { $0.id == draft.foodID }) ?? draft.originalFood?.labelSnapshot.flatMap({ $0.id == draft.foodID ? $0 : nil }) {
         HStack(alignment: .bottom, spacing: 14) {
@@ -186,7 +186,7 @@ struct HomeEntryView: View {
             ForEach(state.exercises) { exercise in Text(exercise.name + " · " + exercise.muscle).tag(exercise.id) }
             Text("其他动作").tag("other")
           }.labelsHidden().modifier(FieldSurface(palette: palette))
-            .onChange(of: draft.exerciseID) { _, id in if let exercise = state.exercises.first(where: { $0.id == id }) { draft.selectExercise(exercise) } }
+            .appOnChange(of: draft.exerciseID) { _, id in if let exercise = state.exercises.first(where: { $0.id == id }) { draft.selectExercise(exercise) } }
         }
         if draft.exerciseID == "other" || draft.exerciseID.isEmpty { textField("动作名称", placeholder: "输入动作名称", value: $draft.name) }
         strengthFields

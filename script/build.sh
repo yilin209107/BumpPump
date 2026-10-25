@@ -5,7 +5,7 @@ SDK_PATH="${FITNESS_APP_SDK:-$(xcrun --show-sdk-path)}"
 if [[ -z "${FITNESS_APP_SDK:-}" && -d /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk ]]; then SDK_PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk; fi
 SDK_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :Version' "$SDK_PATH/SDKSettings.plist")"
 CONFIGURATION="${BUMPPUMP_CONFIGURATION:-release}"
-FLAGS=(--arch arm64 -c "$CONFIGURATION" --sdk "$SDK_PATH" -Xlinker -platform_version -Xlinker macos -Xlinker 14.0 -Xlinker "$SDK_VERSION")
+FLAGS=(--arch arm64 -c "$CONFIGURATION" --sdk "$SDK_PATH" -Xlinker -platform_version -Xlinker macos -Xlinker 13.0 -Xlinker "$SDK_VERSION")
 swift build --product BumpPump "${FLAGS[@]}"
 BIN="$(swift build "${FLAGS[@]}" --show-bin-path)/BumpPump"
 APP="$PWD/dist/BumpPump.app"
@@ -22,9 +22,9 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>BumpPump</string>
 <key>CFBundleDisplayName</key><string>BumpPump</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>1.0.1</string>
-<key>CFBundleVersion</key><string>2</string>
-<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>CFBundleShortVersionString</key><string>1.0.2</string>
+<key>CFBundleVersion</key><string>3</string>
+<key>LSMinimumSystemVersion</key><string>13.0</string>
 <key>NSPrincipalClass</key><string>NSApplication</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>NSHighResolutionCapable</key><true/>

@@ -27,6 +27,6 @@ struct APISettingsView: View {
       }
     }.frame(minWidth: 760, minHeight: 640).frame(maxWidth: .infinity, maxHeight: .infinity)
       .onAppear { state.restoreSelection(); state.page = .api; saved = false }
-      .onChange(of: colorScheme, initial: true) { _, scheme in state.dark = scheme == .dark }
+      .appOnChange(of: colorScheme, initial: true) { _, scheme in state.dark = scheme == .dark }
   }
 }

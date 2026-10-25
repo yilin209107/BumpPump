@@ -19,13 +19,13 @@
 
 ## 第一次使用
 
-下载最新 Release 中的 `BumpPump-macOS-arm64-v1.0.1.zip`，解压后把 BumpPump.app 拖入 Applications。
+下载最新 Release 中的 `BumpPump-macOS-arm64-v1.0.2.zip`，解压后把 BumpPump.app 拖入 Applications。
 
 首次打开进入设置，可以先选手动模式。App 不附带个人记录、聊天、食品标签或 API Key；填写自己的数据即可使用。再次启动直接进入主页。
 
 助理使用自己的服务商 API Key；Shift+Enter 发送，Enter 换行。图片理解取决于所选模型能力。
 
-**平台：Apple Silicon，macOS 14+；Liquid Glass 需要 macOS 26+。** 当前安装包为本机 ad-hoc 签名，尚未完成 Apple Developer ID 签名与公证。
+**平台：Apple Silicon，macOS 13+；Liquid Glass 需要 macOS 26+。** macOS 13 使用普通系统材质与兼容环图；已通过最低系统版本编译检查，Ventura 真机/虚拟机运行验证待完成。 当前安装包为本机 ad-hoc 签名，尚未完成 Apple Developer ID 签名与公证。
 
 ## 数据与隐私
 

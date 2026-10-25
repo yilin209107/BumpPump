@@ -36,7 +36,7 @@ struct HomeRecordsView: View {
         }
         if let error { Label(error, systemImage: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(palette.error) }
         if records.isEmpty {
-          ContentUnavailableView(removed ? "这里没有已移除的记录" : "还没有匹配的本机记录", systemImage: removed ? "arrow.uturn.backward" : "square.and.pencil", description: Text(removed ? "移除的记录会保留在这里，可以随时恢复。" : "你的记录会出现在这里。导入记录和手动记录都可以在这里修改。" )).frame(maxHeight: .infinity)
+          AppEmptyState(removed ? "这里没有已移除的记录" : "还没有匹配的本机记录", systemImage: removed ? "arrow.uturn.backward" : "square.and.pencil", description: Text(removed ? "移除的记录会保留在这里，可以随时恢复。" : "你的记录会出现在这里。导入记录和手动记录都可以在这里修改。" )).frame(maxHeight: .infinity)
         } else {
           ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {

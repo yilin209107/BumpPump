@@ -32,7 +32,7 @@ struct HomeOverviewView: View {
           .padding(.horizontal,geo.size.width < 600 ? 24:36).padding(.top,26).padding(.bottom,40)
           .frame(maxWidth:.infinity)
       }.modifier(HomeScrollViewport())
-        .onChange(of: state.selectedDate) { _, _ in state.expandedMealID = nil; mealPage = 0 }
+        .appOnChange(of: state.selectedDate) { _, _ in state.expandedMealID = nil; mealPage = 0 }
     }.environment(\.homePageAnimationLedger, animationLedger)
       .sheet(item:$editingMeal){meal in HomeRecordsView(state:state,palette:palette,recordIDs:Set(meal.foods.map(\.id)),scopeTitle:meal.title)}
   }
@@ -168,11 +168,8 @@ struct HomeMealRing: View {
     let entries = [HomeMacroEntry(name: "蛋白质", grams: nutrition.protein, factor: 4, color: DemoMealKind.breakfast.color(dark: palette.dark)),
       HomeMacroEntry(name: "碳水", grams: nutrition.carbs, factor: 4, color: DemoMealKind.lunch.color(dark: palette.dark)),
       HomeMacroEntry(name: "脂肪", grams: nutrition.fat, factor: 9, color: DemoMealKind.dinner.color(dark: palette.dark))]
-    Chart(entries) { entry in
-      SectorMark(angle: .value("热量", entry.kcal), innerRadius: .ratio(0.76), outerRadius: .ratio(0.98), angularInset: 2)
-        .foregroundStyle(entry.color).cornerRadius(2)
-        .accessibilityLabel(entry.name).accessibilityValue(HomeFormat.number(entry.grams, digits: 1) + " 克")
-    }.chartLegend(.hidden).modifier(HomeRingReveal(token: nutrition.animationKey, identity: identity)).background {
+    AppNutritionRing(segments:entries.map{.init(name:$0.name,value:$0.kcal,color:$0.color,accessibilityValue:HomeFormat.number($0.grams,digits:1)+" 克")},innerRatio:0.76,outerRatio:0.98,gap:2)
+      .modifier(HomeRingReveal(token: nutrition.animationKey, identity: identity)).background {
       if nutrition.protein + nutrition.carbs + nutrition.fat == 0 { Circle().stroke(palette.line.opacity(0.25), lineWidth: 10).padding(8) }
     }.overlay {
       VStack(spacing: 4) {

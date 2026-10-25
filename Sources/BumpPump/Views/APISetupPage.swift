@@ -66,7 +66,7 @@ struct APISetupPage: View {
       }.frame(maxWidth: 500).padding(.top, 12).padding(.bottom, 24)
     }.frame(maxWidth: .infinity, maxHeight: .infinity)
       .task(id: state.provider.id) { if !preview { await state.loadKeyIfNeeded() } }
-      .onChange(of: state.error) { _, error in if error != nil && state.apiKey.isEmpty { keyFocused = true } }
+      .appOnChange(of: state.error) { _, error in if error != nil && state.apiKey.isEmpty { keyFocused = true } }
   }
   @ViewBuilder private func fields(_ palette: SetupPalette) -> some View {
     VStack(spacing: compact ? 14 : 20) {

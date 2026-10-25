@@ -13,3 +13,4 @@ jobs:
       - run: ./script/check_assistant_keyboard.sh
       - run: ./script/check_onboarding_connection.sh
       - run: ./script/check_app_updates.sh
+      - run: ./script/check_macos_compatibility.sh

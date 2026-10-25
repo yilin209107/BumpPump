@@ -48,12 +48,12 @@ struct AssistantReadReceipt:View {
       HStack(spacing:0) {
         Text("已查看本机 ")
         Text(shown,format:.number.grouping(.never)).monospacedDigit()
-          .contentTransition(.numericText(value:Double(shown)))
+          .appNumericTransition(value:Double(shown))
         Text(" 条记录")
       }
     }.font(.system(size:11)).foregroundStyle(.secondary)
       .accessibilityElement(children:.ignore).accessibilityLabel("已查看本机\(count)条记录")
-      .onAppear{update()}.onChange(of:count){_,_ in update()}
+      .onAppear{update()}.appOnChange(of:count){_,_ in update()}
   }
-  private func update(){withAnimation(reduced ? nil:.smooth(duration:1.4)){shown=count}}
+  private func update(){withAnimation(reduced ? nil:.appSmooth(duration:1.4)){shown=count}}
 }

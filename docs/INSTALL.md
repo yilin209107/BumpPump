@@ -1,8 +1,8 @@
 # 安装 BumpPump · 泵碰
 
-适用 Apple Silicon Mac，macOS 14 或更新。macOS 26 或更新使用系统 Liquid Glass。
+适用 Apple Silicon Mac，macOS 13 或更新。macOS 26 或更新使用系统 Liquid Glass。
 
-1. 下载并解压 `BumpPump-macOS-arm64-v1.0.1.zip`。
+1. 下载并解压 `BumpPump-macOS-arm64-v1.0.2.zip`。
 2. 把 `BumpPump.app` 拖入 Applications，打开后完成首次设置。
 3. 选择手动记录，或自行在 App 内配置 AI 服务商和 API Key。
 
@@ -13,3 +13,5 @@
 升级时替换 Applications 中的 BumpPump.app。本机记录和配置位于用户 Application Support，保留同一应用身份即可延续。可在设置中导出记录备份。
 
 许可为 PolyForm Noncommercial 1.0.0，允许个人非商业使用；商业使用需另行书面授权。完整条款见压缩包内许可协议及 App 的 LICENSE。
+
+macOS 13 使用普通系统材质、兼容环形图与旧版滚动行为。此版本已按 macOS 13 目标编译并检查，尚未在 Ventura 真机或虚拟机完成运行验证。

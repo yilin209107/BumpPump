@@ -123,7 +123,7 @@ struct AppAboutView: View {
         if !message.isEmpty { Text(message).font(.system(size: 14)).foregroundStyle(palette.foreground).accessibilityAddTraits(.updatesFrequently) }
       }.padding(40).frame(maxWidth: 700, alignment: .leading).frame(maxWidth: .infinity)
     }.background(palette.background)
-      .onChange(of: repository) { _, _ in request?.cancel(); result = nil; message = "" }
+      .appOnChange(of: repository) { _, _ in request?.cancel(); result = nil; message = "" }
       .onDisappear { request?.cancel() }
   }
   private func check() {

@@ -16,11 +16,10 @@ final class OnboardingDelegate: NSObject, NSApplicationDelegate {
   @NSApplicationDelegateAdaptor(OnboardingDelegate.self) var delegate
   @StateObject private var state = SetupState()
   @StateObject private var motion = SetupMotion()
-  @Environment(\.openSettings) private var openSettings
-  @AppStorage("BumpPump.settingsTab") private var settingsTab = "ai"
   var body: some Scene {
     WindowGroup("泵碰 · BumpPump", id: "onboarding") {
       SetupRootView(state: state, motion: motion)
+        .modifier(AppSettingsCompatibility())
         .frame(minWidth: 760, minHeight: 640)
         .background(WindowChrome(dark: state.dark))
     }
@@ -28,7 +27,7 @@ final class OnboardingDelegate: NSObject, NSApplicationDelegate {
     .defaultSize(width: 1120, height: 800)
     .commands {
       CommandGroup(after: .appInfo) {
-        Button("检查新版本…") { settingsTab = "about"; openSettings() }
+        AppCheckForUpdatesButton().modifier(AppSettingsCompatibility())
       }
       CommandGroup(replacing: .newItem) {
         Button("新增记录") { NotificationCenter.default.post(name: .newFitnessRecord, object: nil) }.keyboardShortcut("n").disabled(state.presentsOnboarding)
@@ -40,7 +39,7 @@ final class OnboardingDelegate: NSObject, NSApplicationDelegate {
       }
     }
     Settings {
-      AppSettingsView(setup: state)
+      AppSettingsView(setup: state).modifier(AppSettingsCompatibility())
     }
   }
 }
@@ -64,4 +63,10 @@ private struct WindowChrome: NSViewRepresentable {
 extension Notification.Name {
   static let newFitnessRecord = Notification.Name("BumpPump.newRecord")
   static let refreshFitnessRecords = Notification.Name("BumpPump.refreshRecords")
+}
+
+private struct AppCheckForUpdatesButton:View {
+  @Environment(\.appOpenSettings) private var openSettings
+  @AppStorage("BumpPump.settingsTab") private var settingsTab="ai"
+  var body:some View {Button("检查新版本…"){settingsTab="about";openSettings()}}
 }

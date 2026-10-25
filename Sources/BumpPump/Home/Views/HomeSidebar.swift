@@ -47,11 +47,11 @@ struct HomeSidebar: View {
       VStack(alignment: .leading, spacing: 16) {
         Divider().opacity(0.5)
         Button { state.showRecords = true } label: { Label("我的本机记录", systemImage: "clock.arrow.circlepath").frame(maxWidth: .infinity, alignment: .leading) }.modifier(AppGlassButton()).frame(minHeight: 32)
-        SettingsLink { Label("设置", systemImage: "gearshape").frame(maxWidth: .infinity, alignment: .leading) }
+        AppSettingsLink { Label("设置", systemImage: "gearshape").frame(maxWidth: .infinity, alignment: .leading) }
           .modifier(AppGlassButton()).frame(minHeight: 32)
       }.padding(20)
     }.ignoresSafeArea(.container, edges: .top).foregroundStyle(palette.foreground)
-      .onChange(of: state.destination) { _, destination in
+      .appOnChange(of: state.destination) { _, destination in
         withAnimation(.easeOut(duration: 0.2)) {
           switch destination { case .meal, .foods: foodExpanded = true; case .strength: strengthExpanded = true; case .cardio: cardioExpanded = true; default: break }
         }

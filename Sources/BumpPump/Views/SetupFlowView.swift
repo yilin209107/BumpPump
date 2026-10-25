@@ -73,7 +73,7 @@ struct SetupFlowView: View {
       }
       .coordinateSpace(name: "setupRoot")
       .onPreferenceChange(ContinueBounds.self) { motion.buttonRect = $0 }
-      .onChange(of: geo.size, initial: true) { _, size in currentSize = size }
+      .appOnChange(of: geo.size, initial: true) { _, size in currentSize = size }
       .clipped().foregroundStyle(palette.foreground)
       .background(palette.background.ignoresSafeArea())
       .background(WindowShake(trigger: state.shakeID, reducedMotion: reduceMotion))
@@ -84,7 +84,7 @@ struct SetupFlowView: View {
       .onDisappear { verificationTask?.cancel(); state.cancelTest(); motion.cancel() }
     }
     .preferredColorScheme(preview ? (state.dark ? .dark : .light) : nil)
-    .onChange(of: colorScheme, initial: true) { _, scheme in if !preview { state.dark = scheme == .dark } }
+    .appOnChange(of: colorScheme, initial: true) { _, scheme in if !preview { state.dark = scheme == .dark } }
     .tint(state.palette.accent)
     .sheet(isPresented: $showingHelp) { APIHelpSheet(palette: state.palette).environment(\.usesGlassControls, false) }
     .environment(\.usesGlassControls, false)

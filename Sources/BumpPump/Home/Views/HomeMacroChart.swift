@@ -40,16 +40,12 @@ struct HomeMacroChart: View {
       }
       if entries.reduce(0, { $0 + $1.kcal }) <= 0 {
         let hasMeals = state.day?.meals.contains { selectedMeal == "全天" || $0.kind.rawValue == selectedMeal } == true
-        ContentUnavailableView(hasMeals ? "已记录，暂无完整营养组成" : "这一天没有该餐次的记录", systemImage: "fork.knife", description: Text(hasMeals ? "热量与已知内容保留在明细；没有数据的营养素不会补零。" : "可以点击加号，记录这一餐。" )).frame(height: 200)
+        AppEmptyState(hasMeals ? "已记录，暂无完整营养组成" : "这一天没有该餐次的记录", systemImage: "fork.knife", description: Text(hasMeals ? "热量与已知内容保留在明细；没有数据的营养素不会补零。" : "可以点击加号，记录这一餐。" )).frame(height: 200)
       } else {
         HStack(spacing: compact ? 24 : 54) {
           if !table {
-            Chart(entries) { entry in
-              SectorMark(angle: .value("热量", entry.kcal), innerRadius: .ratio(0.72), outerRadius: .ratio(0.96), angularInset: 2.5)
-                .cornerRadius(3).foregroundStyle(entry.color).opacity(hovered == nil || hovered == entry.name ? 1 : 0.35)
-                .accessibilityLabel(entry.name).accessibilityValue("\(HomeFormat.number(entry.grams, digits: 1)) 克，\(HomeFormat.number(entry.kcal)) 千卡")
-            }.chartLegend(.hidden)
-              .chartOverlay { proxy in
+            AppNutritionRing(segments:entries.map{.init(name:$0.name,value:$0.kcal,color:$0.color.opacity(hovered == nil || hovered == $0.name ? 1:0.35),accessibilityValue:HomeFormat.number($0.grams,digits:1)+" 克，"+HomeFormat.number($0.kcal)+" 千卡")},innerRatio:0.72,outerRatio:0.96,gap:2.5,cornerRadius:3)
+              .overlay {
                 GeometryReader { geometry in
                   Rectangle().fill(.clear).contentShape(Rectangle())
                     .onContinuousHover { phase in
@@ -85,7 +81,7 @@ struct HomeMacroChart: View {
           if !compact { Spacer(minLength: 0) }
         }.frame(maxWidth: .infinity, alignment: .leading)
       }
-    }.onChange(of: meal) { _, _ in hovered = nil }.onChange(of: state.selectedDate) { _, _ in hovered = nil }
+    }.appOnChange(of: meal) { _, _ in hovered = nil }.appOnChange(of: state.selectedDate) { _, _ in hovered = nil }
   }
   private func segment(at point: CGPoint, size: CGSize) -> String? {
     let dx = point.x-size.width/2, dy = point.y-size.height/2

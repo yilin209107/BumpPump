@@ -57,7 +57,7 @@ struct HomeCategoryView: View {
   }
   @ViewBuilder private func activityList(_ activities: [DemoActivity]) -> some View {
     if activities.isEmpty {
-      ContentUnavailableView("这一天没有相关记录", systemImage: "calendar", description: Text("可以在上方切换日期，或点击加号记录这次运动。"))
+      AppEmptyState("这一天没有相关记录", systemImage: "calendar", description: Text("可以在上方切换日期，或点击加号记录这次运动。"))
         .frame(maxWidth: .infinity).padding(.vertical, 50)
     } else {
       ForEach(activities) { activity in

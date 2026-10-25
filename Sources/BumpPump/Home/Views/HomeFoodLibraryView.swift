@@ -18,9 +18,9 @@ struct HomeFoodLibraryView: View {
       }
       if state.catalogLoading { ProgressView("正在读取食品库…").frame(maxWidth: .infinity).padding(35) }
       else if !state.catalogMessage.isEmpty && foods.isEmpty {
-        ContentUnavailableView("食品库暂无条目", systemImage: "shippingbox", description: Text(state.catalogMessage)).frame(maxWidth: .infinity).padding(.vertical, 30)
+        AppEmptyState("食品库暂无条目", systemImage: "shippingbox", description: Text(state.catalogMessage)).frame(maxWidth: .infinity).padding(.vertical, 30)
       } else if foods.isEmpty {
-        ContentUnavailableView(state.catalogQuery.isEmpty ? "食品库里还没有条目" : "没有找到匹配的食品", systemImage: "shippingbox", description: Text("这里展示数据库中的预包装食品，不展示当天的菜肴。" )).frame(maxWidth: .infinity).padding(.vertical, 30)
+        AppEmptyState(state.catalogQuery.isEmpty ? "食品库里还没有条目" : "没有找到匹配的食品", systemImage: "shippingbox", description: Text("这里展示数据库中的预包装食品，不展示当天的菜肴。" )).frame(maxWidth: .infinity).padding(.vertical, 30)
       } else {
         Text("\(foods.count) 种食品").font(.system(size: 12)).foregroundStyle(palette.secondary)
         ForEach(foods) { food in
@@ -35,7 +35,7 @@ struct HomeFoodLibraryView: View {
               Text(food.value("kcal", unit: "kcal")).font(.system(size: 18, weight: .medium, design: .rounded)).monospacedDigit()
               Image(systemName: "chevron.right").font(.system(size: 11))
             }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
-          }.modifier(AppGlassButton()).buttonBorderShape(.roundedRectangle(radius: 16))
+          }.modifier(AppGlassButton()).appRoundedButtonBorder(radius:16)
         }
       }
     }.fileImporter(isPresented: $chooseDatabase, allowedContentTypes: [.database, .data]) { result in

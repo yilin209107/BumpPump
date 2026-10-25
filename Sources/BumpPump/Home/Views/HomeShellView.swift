@@ -29,7 +29,7 @@ struct HomeWorkspace: View {
     self.state=state;self.setup=setup;self.preview=preview
     _agent=StateObject(wrappedValue:FitnessAgentState(directory:preview ? nil:state.entryStore?.url.deletingLastPathComponent().appendingPathComponent("Assistant")))
   }
-  @Environment(\.openSettings) private var openSettings
+  @Environment(\.appOpenSettings) private var openSettings
   var body: some View {
     let palette = setup.palette
     HomeAtmosphere(dark: setup.dark, reduced: reduced, fixedTime: preview ? 8 : nil) {
@@ -54,7 +54,7 @@ struct HomeWorkspace: View {
               }
             }.id(state.destination).transition(.opacity.combined(with: .offset(y: reduced ? 0 : 6)))
           }
-        }.frame(maxWidth: .infinity, maxHeight: .infinity).clipped().safeAreaPadding(.top, 12)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity).clipped().appSafeAreaPadding(.top, 12)
           .background { GeometryReader { geometry in
             Color.clear.preference(key: HomeGlowCollisionBounds.self, value: geometry.frame(in: .named("homeGlowSpace")))
           } }
@@ -68,7 +68,7 @@ struct HomeWorkspace: View {
         .navigationTitle(state.query.isEmpty ? (state.destination == .overview ? "主页":state.destination.title) : "搜索")
         .modifier(HomeWorkspaceToolbarTitle())
       }.navigationSplitViewStyle(.balanced)
-        .toolbar(removing:.sidebarToggle)
+        .appRemoveSidebarToolbar()
         .toolbarBackground(.hidden, for: .windowToolbar)
         .frame(minWidth:0,maxWidth:.infinity)
       if assistant {AssistantPanel(agent:agent,home:state,setup:setup){setAssistant(false)}.frame(width:min(390,max(320,workspaceWidth*0.34))).transition(.move(edge:.trailing).combined(with:.opacity))}
@@ -80,8 +80,8 @@ struct HomeWorkspace: View {
       }
     }.environment(\.usesGlassControls, false).ignoresSafeArea(edges: .top).foregroundStyle(palette.foreground).tint(palette.accent)
       .task { state.load(); if !preview && HomeChecks.output == nil && OnboardingChecks.output == nil { await state.loadPackagedFoods() } }
-      .onChange(of: colorScheme, initial: true) { _, scheme in if !preview { setup.dark = scheme == .dark } }
-      .onChange(of: scenePhase) { _, phase in
+      .appOnChange(of: colorScheme, initial: true) { _, scheme in if !preview { setup.dark = scheme == .dark } }
+      .appOnChange(of: scenePhase) { _, phase in
         if phase == .active && !preview { state.refreshCalendar(); state.refreshLocalEntries() }
       }
       .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { tick in
@@ -174,7 +174,7 @@ struct HomeSearchView: View {
         Text("搜索结果").font(.system(size: 28, weight: .medium))
         Text("分类、" + HomeFormat.date(state.selectedDate) + "的饮食记录，以及预包装食品。").font(.system(size: 13)).foregroundStyle(palette.secondary)
         if state.searchResults.isEmpty {
-          ContentUnavailableView.search(text: state.query).frame(maxWidth: .infinity).padding(.top, 45)
+          AppEmptyState.search(text: state.query).frame(maxWidth: .infinity).padding(.top, 45)
         } else {
           ForEach(state.searchResults) { result in
             Button { state.selectSearchResult(result) } label: {

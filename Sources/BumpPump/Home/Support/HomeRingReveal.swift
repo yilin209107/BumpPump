@@ -12,6 +12,6 @@ struct HomeRingReveal: ViewModifier {
       .opacity(progress)
       .blur(radius: reduced ? 0 : max(0, 3 * (1-progress)))
       .modifier(HomeRevealWhenVisible(progress: $progress, token: "ring|" + identity + "|" + token,
-        animation: reduced ? .easeOut(duration: 0.12) : .spring(duration: 0.85, bounce: 0.12)))
+        animation: reduced ? .easeOut(duration: 0.12) : .appSpring(duration: 0.85, bounce: 0.12)))
   }
 }

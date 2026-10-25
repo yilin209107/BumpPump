@@ -4,7 +4,7 @@
 
 ## 源码
 
-上传本项目根目录的 Package.swift、Sources、Resources、Tests、script、docs、README、LICENSE、.gitignore 和 .github。不要上传 .build、dist、outputs、work、数据库、聊天、API Key 或证书。也可以解压 BumpPump-Source-v1.0.0.zip，将其 BumpPump 文件夹作为 GitHub Desktop 的本地仓库。
+上传本项目根目录的 Package.swift、Sources、Resources、Tests、script、docs、README、LICENSE、.gitignore 和 .github。不要上传 .build、dist、outputs、work、数据库、聊天、API Key 或证书。也可以解压 BumpPump-Source-v1.0.2.zip，将其 BumpPump 文件夹作为 GitHub Desktop 的本地仓库。
 
 仓库首页使用 Resources/Cover.png。应用名称为 BumpPump，中文名为泵碰，Bundle ID 为 app.bumppump.mac，初始版本为 1.0.0。
 
@@ -12,7 +12,7 @@
 
 运行 `./script/build.sh` 和 `python3 script/package.py`。outputs 中包含 Mac 安装 ZIP、源码 ZIP、SHA256SUMS 和 release-manifest.json。
 
-在 GitHub Releases → Draft a new release，标签为 v1.0.0，目标 main。上传 Mac ZIP、SHA256SUMS 和 manifest；源码 ZIP 可选。先保存草稿，核对后发布。初期试用可标为 pre-release；App 内版本检查只查询正式 Release。
+在 GitHub Releases → Draft a new release，标签为 v1.0.2，目标 main。上传 Mac ZIP、SHA256SUMS 和 manifest；源码 ZIP 可选。先保存草稿，核对后发布。初期试用可标为 pre-release；App 内版本检查只查询正式 Release。
 
 ## 签名
 
@@ -20,7 +20,7 @@
 
 ## 自动化
 
-CI 验证构建及隔离测试；推送 v* 标签会尝试构建并创建 Release 草稿。流程只创建草稿，仍需检查后发布。尚未在具体远程仓库验证权限及云端执行。自动化不会提供 Apple 正式证书或自动获得公证。
+CI 验证构建及隔离测试；推送 v* 标签会尝试构建并创建 Release 草稿。流程只创建草稿，仍需检查后发布。流程已在本仓库通过；每次发布仍须确认该标签对应的检查结果。自动化不会提供 Apple 正式证书或自动获得公证。
 
 ## 使用许可与发布说明
 

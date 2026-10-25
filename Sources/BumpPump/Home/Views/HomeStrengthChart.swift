@@ -17,7 +17,7 @@ struct HomeStrengthChart: View {
     VStack(alignment: .leading, spacing: 20) {
       HomeSectionHeading(title: "逐组训练记录", subtitle: "", help: "每根柱子代表一个训练日期，颜色区分组次，柱高为当天总次数或秒数；没有训练的日期不补零。同动作、同负重口径及侧别分别比较，热身组保留在明细中但不计入柱图。将鼠标放在柱子上可查看逐组数据，点击下方记录可核对重量与原始组。") { HStack(spacing: 14) { HomeAddButton(label: "记录力量训练", palette: palette) { state.beginContextEntry() }; HomeChartTableSwitch(table: $table) } }
       if series.isEmpty {
-        ContentUnavailableView("还没有可绘图的逐组记录", systemImage: "chart.bar", description: Text("点击右上角加号，选择动作并填写每组次数或秒数。"))
+        AppEmptyState("还没有可绘图的逐组记录", systemImage: "chart.bar", description: Text("点击右上角加号，选择动作并填写每组次数或秒数。"))
       } else {
         Picker("查看动作与口径", selection: Binding(get: { chosen?.id ?? "" }, set: { selection = $0; hovered = nil })) {
           ForEach(series) { Text($0.title).tag($0.id) }
@@ -49,7 +49,7 @@ struct HomeStrengthChart: View {
                       .onContinuousHover { phase in
                         switch phase {
                         case .active(let point):
-                          guard let frame = proxy.plotFrame else { hovered = nil; return }
+                          guard let frame = proxy.appPlotFrame else { hovered = nil; return }
                           let plot = geometry[frame]
                           guard plot.contains(point) else { hovered = nil; return }
                           hovered = proxy.value(atX: point.x-plot.minX, as: String.self)
