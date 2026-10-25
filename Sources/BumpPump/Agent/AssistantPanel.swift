@@ -12,7 +12,6 @@ struct AssistantPanel:View {
   @Environment(\.scenePhase) private var phase
   @Environment(\.appAnimationsVisible) private var animationsVisible
   @State private var composerHeight:CGFloat=20
-  @State private var bottomOverlayHeight:CGFloat=104
   @State private var undoHovered=false
   @State private var undoHelp=false
   @State private var options=false
@@ -53,8 +52,7 @@ struct AssistantPanel:View {
             }
           Button(action:close){Image(systemName:"xmark").frame(width:26,height:26)}.modifier(AppGlassButton(circle:true)).foregroundStyle(palette.secondary).accessibilityLabel("收起助理")
         }.padding(.horizontal,22).padding(.top,12).padding(.bottom,14)
-        ZStack(alignment:.bottom) {
-          ScrollViewReader {proxy in
+        ScrollViewReader {proxy in
             ScrollView {
               LazyVStack(alignment:.leading,spacing:22) {
                 if agent.messages.isEmpty {
@@ -68,27 +66,17 @@ struct AssistantPanel:View {
                   else if let message=row.message {messageView(message)}
                 }
                 if agent.busy {HStack(spacing:8){ProgressView().controlSize(.mini);Text(agent.status).font(.system(size:11)).foregroundStyle(palette.secondary)}.padding(.vertical,8)}
-                Color.clear.frame(height:bottomOverlayHeight+16).id("assistant-bottom")
+                Color.clear.frame(height:1).id("assistant-bottom")
               }.padding(.horizontal,24)
             }.defaultScrollAnchor(.top)
+              // The system reserves the composer's complete height for the final
+              // scroll position. Unclipped content can still pass behind its glass.
+              .scrollClipDisabled()
+              .safeAreaInset(edge:.bottom,spacing:0){bottomControls}
               .onChange(of:agent.messages.last?.text){_,text in if text != nil {proxy.scrollTo("assistant-bottom",anchor:.bottom)}}
               .onChange(of:agent.messages.count){_,count in if count > 0 {withAnimation(.easeOut(duration:reduced ? 0.05:0.18)){proxy.scrollTo("assistant-bottom",anchor:.bottom)}}}
           }
-          VStack(spacing:0) {
-            if let error=agent.error {
-              VStack(alignment:.leading,spacing:8) {
-                Text(error).font(.system(size:12)).foregroundStyle(palette.error).textSelection(.enabled)
-                if setup.recordingMode != .ai {Button("打开AI配置"){openAISettings()}.modifier(AppGlassButton())}
-              }.frame(maxWidth:.infinity,alignment:.leading).padding(.horizontal,22).padding(.vertical,10)
-            }
-            composer.padding(.horizontal,18).padding(.bottom,16)
-          }
-          .background { GeometryReader { geometry in Color.clear.preference(key:AssistantBottomOverlayHeight.self,value:geometry.size.height) } }
-        }
-        .onPreferenceChange(AssistantBottomOverlayHeight.self){height in
-          let measured=ceil(height)
-          if abs(bottomOverlayHeight-measured)>1 {bottomOverlayHeight=measured}
-        }
+        .clipped()
       }
     }.foregroundStyle(palette.foreground).environment(\.usesGlassControls,true)
       .overlay(alignment:.leading){Rectangle().fill(palette.line.opacity(0.24)).frame(width:1)}
@@ -115,6 +103,17 @@ struct AssistantPanel:View {
         AssistantMarkdown(text:message.text).frame(maxWidth:.infinity,alignment:.leading)
         if message.interrupted {Text("回复已中断").font(.system(size:10)).foregroundStyle(palette.secondary)}
       }
+    }
+  }
+  private var bottomControls:some View {
+    VStack(spacing:0) {
+      if let error=agent.error {
+        VStack(alignment:.leading,spacing:8) {
+          Text(error).font(.system(size:12)).foregroundStyle(palette.error).textSelection(.enabled)
+          if setup.recordingMode != .ai {Button("打开AI配置"){openAISettings()}.modifier(AppGlassButton())}
+        }.frame(maxWidth:.infinity,alignment:.leading).padding(.horizontal,22).padding(.vertical,10)
+      }
+      composer.padding(.horizontal,18).padding(.top,14).padding(.bottom,16)
     }
   }
   private var composer:some View {
@@ -164,11 +163,6 @@ struct AssistantPanel:View {
     let panel=NSOpenPanel();panel.canChooseDirectories=false;panel.allowsMultipleSelection=true;panel.allowedContentTypes=imagesOnly ? [.image]:[.pdf,.plainText,.json,.commaSeparatedText];panel.message="选择的附件会在发送消息时交给你配置的AI服务商。";panel.prompt="添加"
     panel.begin{response in if response == .OK {agent.addAttachments(panel.urls)}}
   }
-}
-
-private struct AssistantBottomOverlayHeight:PreferenceKey {
-  static var defaultValue:CGFloat=0
-  static func reduce(value:inout CGFloat,nextValue:()->CGFloat){value=nextValue()}
 }
 
 struct AssistantSeamAurora:View {
